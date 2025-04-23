@@ -1,0 +1,7 @@
+.vscode/*
+.res/*
+.git/*
+slprj/*
+*.original
+*.slxc
+*.mat

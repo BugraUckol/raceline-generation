@@ -1,0 +1,162 @@
+%% Load Results
+clc, clear, close all
+load 8000_result_first_iter
+%% Find x and y values for each point
+traj_x = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,1) + lat_err_arr' ...
+    .* -sin(x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,3));
+traj_y = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,2) + lat_err_arr' ...
+    .* cos(x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,3));
+traj_h = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,3) + ang_err_arr';
+
+figure(5)
+plot(traj_x, traj_y);
+
+%% Find closest marins for each point
+dl = zeros(size(traj_x));
+dr = zeros(size(traj_x));
+lx = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,6);
+ly = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,7);
+rx = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,8);
+ry = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,9);
+
+lxx = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,6);
+lyy = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,7);
+rxx = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,8);
+ryy = x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,9);
+
+figure(1)
+hold on
+plot(traj_x, traj_y);
+plot(lx, ly);
+plot(rx, ry);
+daspect([1,1,1])
+
+half_window_width = 20;
+for i = 1:max(size(traj_x))
+    qx = traj_x(i);
+    qy = traj_y(i);
+    qh = traj_h(i);
+
+    if i > half_window_width && i + half_window_width < max(size(traj_x))
+            qlx = lx(i - half_window_width : i + half_window_width);
+            qly = ly(i - half_window_width : i + half_window_width);
+            qrx = rx(i - half_window_width : i + half_window_width);
+            qry = ry(i - half_window_width : i + half_window_width);
+
+            qvlx = qlx - qx;
+            qvly = qly - qy;
+            qvrx = qrx - qx;
+            qvry = qry - qy;
+
+            qld = sqrt(qvlx.^2 + qvly.^2);
+            qrd = sqrt(qvrx.^2 + qvry.^2);
+
+            if min(abs(qld)) < 0.4
+                [~, lri] = min(abs(qld));
+            elseif  min(abs(qrd)) < 0.1
+                [~, rri] = min(abs(qrd));
+            else
+                qlhe = atan2(qvly,qvlx) - qh; %% pi/2
+                qrhe = atan2(qvry,qvrx) - qh; %% -pi/2
+    
+                [~, lri] = min(mod(abs(qlhe - pi/2), 2*pi));
+                [~, rri] = min(mod(abs(qrhe + pi/2), 2*pi));
+            end
+
+            li = lri + i - half_window_width;
+            ri = rri + i - half_window_width;
+    else
+         li = i;
+         ri = i;
+    end
+
+    d_lx_qx = lx(li) - qx;
+    d_ly_qy = ly(li) - qy;
+
+    d_l_q = d_lx_qx^2 + d_ly_qy^2;
+    dl(i) = sqrt(d_l_q);
+
+    d_rx_qx = rx(ri) - qx;
+    d_ry_qy = ry(ri) - qy;
+
+    d_r_q = d_rx_qx^2 + d_ry_qy^2;
+    dr(i) = sqrt(d_r_q);
+end
+
+%% Extract final
+YasMarina = [traj_x, traj_y, dl, dr];
+
+%% Save
+save results_reparameterized YasMarina
+
+%% Reparam
+% Load mat file
+% clc, clear, close all
+load results_reparameterized.mat
+
+% Path calculations
+x_y_yaw_curv_s = points_to_yaw_curv_s(YasMarina, 1);
+
+% Shift the track limits
+left_side = lateral_shift(x_y_yaw_curv_s,YasMarina(:,3));
+right_side = lateral_shift(x_y_yaw_curv_s,-YasMarina(:,4));
+
+% Create final object
+x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr = [x_y_yaw_curv_s, left_side(:,1), ...
+    left_side(:,2), right_side(:,1), right_side(:,2), YasMarina(:,3), ...
+    -YasMarina(:,4)];
+
+% Save
+% save yas_marina_reparam x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr
+
+% Plot
+figure(1)
+subplot(1,2,1)
+hold on
+plot(x_y_yaw_curv_s(:,5), x_y_yaw_curv_s(:,4))
+title('Curvature')
+grid minor
+subplot(1,2,2)
+hold on
+plot(x_y_yaw_curv_s(:,1), x_y_yaw_curv_s(:,2), 'LineWidth', 2);
+plot(left_side(:,1), left_side(:,2), 'LineWidth', 2);
+plot(right_side(:,1), right_side(:,2), 'LineWidth', 2);
+grid minor
+title('Map')
+daspect([1,1,1])
+xlim([min(min(right_side(:,1)), min(right_side(:,2))),...
+    max(max(right_side(:,1)), max(right_side(:,2)))])
+ylim([min(min(right_side(:,1)), min(right_side(:,2))),...
+    max(max(right_side(:,1)), max(right_side(:,2)))])
+for i = 1:max(size(YasMarina(:,4)))/10
+    plot([right_side(i*10,1), left_side(i*10,1)], [right_side(i*10,2),...
+        left_side(i*10,2)], 'LineWidth', 0.5);
+end
+
+figure(2)
+hold on
+plot(x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr(:,1), x_y_yaw_curv_s(:,2),...
+    'LineWidth', 2);
+hold on
+
+%% Sanity Check
+load yas_marina_xy.mat
+
+% Close the loop
+YasMarina = [YasMarina; YasMarina(1,:)];
+
+% Path calculations
+x_y_yaw_curv_s = points_to_yaw_curv_s(YasMarina, 1);
+
+% Shift the track limits
+left_side = lateral_shift(x_y_yaw_curv_s,YasMarina(:,3));
+right_side = lateral_shift(x_y_yaw_curv_s,-YasMarina(:,4));
+
+% Create final object
+x_y_yaw_curv_s_lx_ly_rx_ry_dl_dr = [x_y_yaw_curv_s, left_side(:,1),...
+    left_side(:,2), right_side(:,1), right_side(:,2), YasMarina(:,3),...
+    -YasMarina(:,4)];
+figure(1)
+subplot(1,2,2)
+plot(lxx, lyy, 'LineWidth', 2);
+plot(rxx, ryy, 'LineWidth', 2);
