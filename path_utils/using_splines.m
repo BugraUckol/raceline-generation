@@ -1,7 +1,7 @@
 %% Load mat file
 % clear, close all, clc
-% load yas_marina_xy.mat
-load results_reparameterized
+load yas_marina_xy.mat
+% load results_reparameterized
 num_of_points = 8000;
 %% Pre-spline processing
 % Close the loop

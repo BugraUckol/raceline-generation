@@ -4,7 +4,7 @@ clc, clear%, close all
 %   given constraints from the past
 
 %% Casadi Imports
-addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
 import casadi.*
 
 %% Initial conditions and constants
@@ -99,7 +99,8 @@ opti.subject_to(U(1,:) <= steering_lim);
 opti.subject_to(X(3,:) <= pi/2.1);
 opti.subject_to(X(3,:) >= -pi/2.1);
 
-opti.subject_to((U(1,2:end) - U(1,1:end-1)).^2 <= (0.001*steering_lim)^2);
+warn_res = warndlg('COMMENTED-OUT STEER RATE LIMIT BUT MIGHT BE NECESSARY IN THE FUTURE');
+% opti.subject_to((U(1,2:end) - U(1,1:end-1)).^2 <= (0.001*steering_lim)^2);
 
 % ---- Initial guess
 % Problem is symmetric when the pendulum is pointing down or up

@@ -5,3 +5,5 @@ slprj/*
 *.original
 *.slxc
 *.mat
+*.asv
+*.DS_Store
