@@ -3,39 +3,38 @@ clc, clear, close all
 
 %% Curve Generation
 % Parameter
-t = linspace(0, 2*pi, 100);  % parametric variable
+t = linspace(0, 4*pi, 200);  % parametric variable
 
 % Parameters to control shape
-a = 10;      % major amplitude (horizontal)
-b = 5;    % vertical amplitude
-c = 3;    % depth amplitude (3D deviation)
+a = 1;      % major amplitude (horizontal)
+b = 1;    % vertical amplitude
+c = 1;    % depth amplitude (3D deviation)
 
 % Parametric equations for 3D figure-eight curve
-x = 0.1 * t .* a .* sin(t);
-y = 0.1 * t .* b .* sin(2*t);
-z = 0.1 * t .* c .* cos(t);
+x = a * cos(t);
+y = b * sin(t);
+z = c * t;
 
 % Plot
 figure(1);
 
-syms t_s
 t_s = sym("t_s","real");
-xs = 0.1 * t_s * a * sin(t_s);
-ys = 0.1 * t_s * b * sin(2*t_s);
-zs = 0.1 * t_s * c * cos(t_s);
+xs = a * cos(t_s);
+ys = b * sin(t_s);
+zs = c * t_s;
 
 r = [xs, ys, zs]';
-r_d = diff(r, t_s);
+r_d = simplify(diff(r, t_s));
 
-ts = r_d / norm(r_d);
+ts = simplify(r_d / norm(r_d));
 
-ts_d = diff(ts, t_s);
+ts_d = simplify(diff(ts, t_s));
 
-ns = ts_d / norm(ts_d);
+ns = simplify(ts_d / norm(ts_d));
 
-bs = cross(ts, ns);
+bs = simplify(cross(ts, ns));
 
-bs_d = diff(bs, t_s);
+bs_d = simplify(diff(bs, t_s));
 
 start = eps;
 err_idx = [];
@@ -49,25 +48,33 @@ p_prev = double(subs(r, t_s, start));
 tt = double(subs(ts, t_s, start));
 nn = double(subs(ns, t_s, start));
 bb = double(subs(bs, t_s, start));
-for i = 1:100
-    clf;
+
+plot3(x, y, z, 'k', 'LineWidth', 2);
+grid on; axis equal;
+xlabel('x'); ylabel('y'); zlabel('z');
+title('3D Infinity Curve (Non-Intersecting)');
+view(135, 30); % adjust view angle for clarity
+hold on
+
+for i = 1:500
+    cla;
     plot3(x, y, z, 'k', 'LineWidth', 2);
-    grid on; axis equal;
-    xlabel('x'); ylabel('y'); zlabel('z');
-    title('3D Infinity Curve (Non-Intersecting)');
-    view(135, 30); % adjust view angle for clarity
-    hold on
 
     ts_e = i * 2*pi / 1000 + start;
+    dt = 2*pi / 1000;
     p = double(subs(r, t_s, ts_e));
+    ds = norm(p - p_prev);
 
     % Substitutions for the points, curvature, torsion, arclength
-    dtds = 2*pi / 1000 / norm(p - p_prev);
+    dtds =  dt/ds;
     x_arr = [x_arr, p(1)];
     y_arr = [y_arr, p(2)];
     z_arr = [z_arr, p(3)];
+    
     kappa_arr = [kappa_arr, dtds * norm(double(subs(ts_d, t_s, ts_e)))];
-    tau_arr = [tau_arr, -dtds * norm(double(subs(bs_d, t_s, ts_e)))];
+    tau_arr = [tau_arr, -dtds * dot(double(subs(bs_d, t_s, ts_e)), ...
+        double(subs(ns, t_s, ts_e)))];
+
     s_arr = [s_arr, s_arr(end) + norm(p - p_prev)];
     
     % Substitude parameter to obtain TNB vectors symbolically
@@ -86,10 +93,10 @@ for i = 1:100
     pb = [p, p + 0.5 * b];
 
     % Frenet-Serret
-    tt = tt + norm(p - p_prev) * nn * kappa_arr(end);
-    nn = nn + norm(p - p_prev) * (-tt * kappa_arr(end) + ...
+    tt = tt + ds * nn * kappa_arr(end);
+    nn = nn + ds * (-tt * kappa_arr(end) + ...
         bb * tau_arr(end));
-    bb = bb - norm(p - p_prev) * nn * tau_arr(end);
+    bb = bb - ds * nn * tau_arr(end);
     
     % Create TNB Frame with Frenet-Serret
     ptt = [p, p + tt];
@@ -100,9 +107,12 @@ for i = 1:100
     plot3(pn(1,:), pn(2,:), pn(3,:), 'LineWidth', 2, 'Color', 'g');
     plot3(pb(1,:), pb(2,:), pb(3,:), 'LineWidth', 2, 'Color', 'b');
 
-    plot3(ptt(1,:), ptt(2,:), ptt(3,:), 'LineWidth', 2, 'Color', 'r', 'LineStyle', '-.');
-    plot3(pnn(1,:), pnn(2,:), pnn(3,:), 'LineWidth', 2, 'Color', 'g', 'LineStyle', '-.');
-    plot3(pbb(1,:), pbb(2,:), pbb(3,:), 'LineWidth', 2, 'Color', 'b', 'LineStyle', '-.');
+    plot3(ptt(1,:), ptt(2,:), ptt(3,:), 'LineWidth', 2, 'Color', 'r', ...
+        'LineStyle', '-.');
+    plot3(pnn(1,:), pnn(2,:), pnn(3,:), 'LineWidth', 2, 'Color', 'g', ...
+        'LineStyle', '-.');
+    plot3(pbb(1,:), pbb(2,:), pbb(3,:), 'LineWidth', 2, 'Color', 'b', ...
+        'LineStyle', '-.');
     pause(0.005);
     p_prev = p;
 end
@@ -112,6 +122,9 @@ figure(2)
 plot(s_arr, kappa_arr, 'LineWidth', 2);
 hold all
 plot(s_arr, tau_arr, 'LineWidth', 2);
+xlabel('Curvilinear Distance [m]')
+ylabel('Value [1/m]')
+legend('Curvature','Torsion')
 
 display(strcat('Problematic points are', 20, num2str(err_idx')))
 
