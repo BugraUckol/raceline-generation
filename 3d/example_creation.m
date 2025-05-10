@@ -56,7 +56,7 @@ title('3D Infinity Curve (Non-Intersecting)');
 view(135, 30); % adjust view angle for clarity
 hold on
 
-for i = 1:500
+for i = 1:1:1000
     cla;
     plot3(x, y, z, 'k', 'LineWidth', 2);
 
@@ -128,4 +128,4 @@ legend('Curvature','Torsion')
 
 display(strcat('Problematic points are', 20, num2str(err_idx')))
 
-save three_d_infinity x y z
+save three_d_infinity s_arr x_arr y_arr z_arr kappa_arr tau_arr
