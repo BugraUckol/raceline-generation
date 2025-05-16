@@ -4,7 +4,8 @@ clc, clear%, close all
 %   given constraints from the past
 
 %% Casadi Imports
-addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("/Users/bugrauckol/Documents/share/casadi-3")
+addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 load three_d_infinity
 
@@ -20,7 +21,7 @@ e_the = 0.0;
 pq_lim = 1;
 
 %% Setting Optimization Problem
-size_vec = size(a_arr);
+size_vec = size(s_arr);
 N = size_vec(1) - 1;
 
 opti = casadi.Opti();
@@ -36,7 +37,7 @@ U = opti.variable(2,N);   %steering
 
 % ---- objective          ---------
 % opti.minimize(t(end)); % minimize time
-opti.minimize(1.0 * U(1,:) * U(1,:)' + 0.0 * t(end)); % minimize steering
+opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)'); % minimize steering
 
 % ---- dynamic constraints --------
 % x' = [t, ey, ep]
