@@ -4,21 +4,39 @@ clc, clear%, close all
 %   given constraints from the past
 
 %% Casadi Imports
-% addpath("/Users/bugrauckol/Documents/share/casadi-3")
-addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
-load three_d_infinity
 
-%% Initial conditions and constants
-t0 = 0;
+%% Import path properties
+path = load('three_d_infinity.mat');
+
+%% System Model
+%{
+
+X = [t, ey, ez, e_psi, e_the]
+    - Time
+    - Error in y direction of the Frenet Frame
+    - Error in z direction of the Frenet Frame
+    - Yaw of the velocity vector wrt. Frenet Frame
+    - Pitch of the velocity vector wrt. Frenet Frame
+        ________
+-[X]-->|        |
+-[p]-->| System |---[X]->
+-[q]-->|________|
+
+%}
+
+%% Constants
 v0 = 1.0; % Not a state for constant velocity model
+pq_lim = 1;
+
+%% Initial conditions
+t0 = 0;
 e_y0 = 0.0;
 e_z0 = 0.0;
 e_psi = 0.0;
 e_the = 0.0;
-
-%% Vehicle Model
-pq_lim = 1;
 
 %% Setting Optimization Problem
 size_vec = size(s_arr);
@@ -35,12 +53,12 @@ ethe = X(5,:);
 
 U = opti.variable(2,N);   %steering
 
-% ---- objective          ---------
-% opti.minimize(t(end)); % minimize time
-opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)'); % minimize steering
+% Cost Function
+opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
+% Minimize angular velocity inputs p and q
 
 % ---- dynamic constraints --------
-% x' = [t, ey, ep]
+% x' = [t, ey, ep, e_the, e_psi]
 f = @(tt,een,eeb,eepsi,eethe,p,q,kappa,tau) [
     (1 - kappa * een) / (v0 * cos(eepsi) * cos(eethe));
     (1 - kappa * een) * tan(eepsi) + tau * eeb;
