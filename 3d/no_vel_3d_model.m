@@ -14,12 +14,13 @@ path = load('three_d_infinity.mat');
 %% System Model
 %{
 
-X = [t, ey, ez, e_psi, e_the]
+X = [t, ey, ez, e_psi, e_the, e_phi]
     - Time
     - Error in y direction of the Frenet Frame
     - Error in z direction of the Frenet Frame
-    - Yaw of the velocity vector wrt. Frenet Frame
-    - Pitch of the velocity vector wrt. Frenet Frame
+    - Yaw of the Body Frame wrt. Frenet Frame
+    - Pitch of the Body Frame wrt. Frenet Frame
+    - Roll of the Body Frame wrt. Frenet Frame
         ________
 -[X]-->|        |
 -[p]-->| System |---[X]->
@@ -37,6 +38,7 @@ e_y0 = 0.0;
 e_z0 = 0.0;
 e_psi = 0.0;
 e_the = 0.0;
+e_phi = 0.0;
 
 %% Setting Optimization Problem
 size_vec = size(s_arr);
@@ -44,7 +46,7 @@ N = size_vec(1) - 1;
 
 opti = casadi.Opti();
 
-X = opti.variable(5, N+1); % state trajectory in path frame
+X = opti.variable(6, N+1); % state trajectory in path frame
 t = X(1,:);
 en = X(2,:);
 eb = X(3,:);

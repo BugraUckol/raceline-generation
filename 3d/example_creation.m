@@ -44,6 +44,12 @@ z_arr = [];
 kappa_arr = [];
 tau_arr = [];
 s_arr = [0];
+tt_arr = [];
+nn_arr = [];
+bb_arr = [];
+yaw_arr = [];
+pitch_arr = [];
+roll_arr = [];
 p_prev = double(subs(r, t_s, start));
 tt = double(subs(ts, t_s, start));
 nn = double(subs(ns, t_s, start));
@@ -92,6 +98,16 @@ for i = 1:1:1000
     pn = [p, p + 0.5 * n];
     pb = [p, p + 0.5 * b];
 
+    tt_arr = [tt_arr, t];
+    nn_arr = [nn_arr, n];
+    bb_arr = [bb_arr, b];
+
+    [yaw, pitch, roll] = dcm2angle( [t,n,b], 'zyx', 'robust');
+
+    yaw_arr = [yaw_arr, yaw];
+    pitch_arr = [pitch_arr, pitch];
+    roll_arr = [roll_arr, roll];
+
     % Frenet-Serret
     tt = tt + ds * nn * kappa_arr(end);
     nn = nn + ds * (-tt * kappa_arr(end) + ...
@@ -128,4 +144,5 @@ legend('Curvature','Torsion')
 
 display(strcat('Problematic points are', 20, num2str(err_idx')))
 
-save three_d_infinity s_arr x_arr y_arr z_arr kappa_arr tau_arr
+save three_d_infinity s_arr x_arr y_arr z_arr kappa_arr tau_arr tt_arr ...
+    nn_arr bb_arr yaw_arr pitch_arr roll_arr
