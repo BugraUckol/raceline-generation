@@ -1,0 +1,3 @@
+[submodule "rigid_body_dynamics"]
+	path = rigid_body_dynamics
+	url = https://github.com/BugraUckol/rigid_body_dynamics.git

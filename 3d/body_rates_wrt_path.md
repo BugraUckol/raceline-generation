@@ -23,9 +23,9 @@ where the $\tilde\omega_{B/E}^{(B)}$ is the skew symmetric version of the $\bar\
 
 ## Relative Angular Velocity Between Two Frames
 
-$\bar\omega_{B/P}^{(B)} = \bar\omega_{B/E}^{(B)} - \bar\omega_{P/E}^{(B)}$
+$\vec\omega_{B/P} = \vec\omega_{B/E} - \vec\omega_{P/E}$
 
-However, $\bar\omega_{P/E}^{(B)}$ do not exist directly but can be found using the relation below
+This vector equation can be resolved in any frame. However, input of the system is easier to express on the body frame, thus, $F_B$ is the natural candidate. Since $\bar\omega_{P/E}^{(B)}$ do not exist directly it must be found using the relation below
 
 $\bar\omega_{P/E}^{(B)} = \hat{C}_{BP}^{(B),T} \bar\omega_{P/E}^{(P)}$
 
