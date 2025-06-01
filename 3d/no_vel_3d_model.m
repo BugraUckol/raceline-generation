@@ -4,8 +4,8 @@ clc, clear, close all
 %   given constraints from the past
 
 %% Casadi Imports
-% addpath("/Users/bugrauckol/Documents/share/casadi-3")
-addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties
@@ -53,9 +53,10 @@ eb = X(3,:);
 epsi = X(4,:);
 ethe = X(5,:);
 
-U = opti.variable(2,N);   %steering
+U = opti.variable(3,N);   % Angular rates
 p_com = U(1,:);
 q_com = U(2,:);
+r_com = U(3,:);
 
 % Cost Function
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
@@ -164,7 +165,6 @@ plot(distance_arr(1:end-1), q_com_arr);
 title('commands')
 
 figure(2)
-daspect([1,1,1])
 p0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_b_p = angle2dcm(e_psi0, e_the0, 0);
 dcm_p_e = angle2dcm(path.yaw_arr(1), path.pitch_arr(1), path.roll_arr(1));
@@ -172,6 +172,7 @@ r = dcm_p_e * [0; e_n0; e_b0] + p0;
 e_n0 = 0.3;
 e_b0 = 0.0;
 for k=1:N-1
+    daspect([1,1,1])
     plot3(path.x_arr, path.y_arr, path.z_arr); hold on
     plot3(x_arr, y_arr, z_arr); grid minor
     dcm_p_e = angle2dcm(path.yaw_arr(k), path.pitch_arr(k), path.roll_arr(k));
@@ -186,8 +187,12 @@ for k=1:N-1
     drawnow;
     dt = time_arr(k+1) - time_arr(k);
     r = r + dcm_b_e * [v0; 0; 0] * dt;
-    skew_w = skew([p_com_arr(k); q_com_arr(k); 0]);
-    dcm_b_p = dcm_b_p + dt * cross(skew_w , dcm_b_p);
+    % skew_w = skew([p_com_arr(k); q_com_arr(k); 0]);
+    v = [p_com_arr(k), q_com_arr(k), 0];
+    skew_w = [    0 -v(3)  v(2);
+               v(3)     0 -v(1);
+              -v(2)  v(1)     0  ];
+    dcm_b_p = dcm_b_p + dt * dcm_b_p * skew_w;
     pause(0.005)
     cla;
 end

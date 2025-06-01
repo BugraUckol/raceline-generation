@@ -17,7 +17,7 @@
 ## A Definition of The Angular Velocity
 Given a transformation matrix $\hat{C}_{BE}^{(B)}$, $\bar\omega_{B/E}^{(B)}$ has the following relation
 
-$\dot{\hat{C}}_{BE}^{(B)} = \tilde\omega_{B/E}^{(B)} \hat{C}_{BE}^{(B)}$
+$\dot{\hat{C}}_{BE}^{(B)} = \hat{C}_{BE}^{(B)}\tilde\omega_{B/E}^{(B)} $
 
 where the $\tilde\omega_{B/E}^{(B)}$ is the skew symmetric version of the $\bar\omega_{B/E}^{(B)}$
 
@@ -25,7 +25,7 @@ where the $\tilde\omega_{B/E}^{(B)}$ is the skew symmetric version of the $\bar\
 
 $\vec\omega_{B/P} = \vec\omega_{B/E} - \vec\omega_{P/E}$
 
-This vector equation can be resolved in any frame. However, input of the system is easier to express on the body frame, thus, $F_B$ is the natural candidate. Since $\bar\omega_{P/E}^{(B)}$ do not exist directly it must be found using the relation below
+This vector equation can be resolved in any frame. However, input of the system is easier to express on the body frame, thus, $F_B$ is the natural candidate. Since $\bar\omega_{P/E}^{(B)}$ do not exist directly it must be found using the relation below (Equation 3.2.9 in ME502 lecture notes)
 
 $\bar\omega_{P/E}^{(B)} = \hat{C}_{BP}^{(B),T} \bar\omega_{P/E}^{(P)}$
 
