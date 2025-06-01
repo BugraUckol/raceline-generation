@@ -4,8 +4,8 @@ clc, clear, close all
 %   given constraints from the past
 
 %% Casadi Imports
-addpath("/Users/bugrauckol/Documents/share/casadi-3")
-% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+% addpath("/Users/bugrauckol/Documents/share/casadi-3")
+addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties
@@ -30,28 +30,29 @@ X = [t, ey, ez, e_psi, e_the, e_phi]
 
 %% Constants
 v0 = 1.0; % Not a state for constant velocity model
-pq_lim = 0.8;
+pqr_lim = 2.0;
 
 %% Initial conditions
 t0 = 0;
 e_n0 = 0.3;
 e_b0 = 0.0;
+e_phi0 = 0.0;
 e_psi0 = 0.2;
 e_the0 = 0.2;
-e_phi0 = 0.0;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
-N = size_vec(2) - 1;
+N = 200; %size_vec(2) - 1;
 
 opti = casadi.Opti();
 
-X = opti.variable(5, N+1); % state trajectory in path frame
+X = opti.variable(6, N+1); % state trajectory in path frame
 t = X(1,:);
 en = X(2,:);
 eb = X(3,:);
-epsi = X(4,:);
+ephi = X(4,:);
 ethe = X(5,:);
+epsi = X(6,:);
 
 U = opti.variable(3,N);   % Angular rates
 p_com = U(1,:);
@@ -59,19 +60,26 @@ q_com = U(2,:);
 r_com = U(3,:);
 
 % Cost Function
+% Minimize angular velocity inputs p and q
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
 opti.minimize(1.0 * X(2,:) * X(2,:)' + 1.0 * X(3,:) * X(3,:)' ...
-    + 0.0 * X(4,:) * X(4,:)' + + 0.0 * X(5,:) * X(5,:)');
-% Minimize angular velocity inputs p and q
+    + 0.0 * X(4,:) * X(4,:)' + 0.0 * X(5,:) * X(5,:)');
 
-% ---- dynamic constraints --------
-% x' = [t, ey, ep, e_the, e_psi]
-f = @(tt,een,eeb,eepsi,eethe,p,q,kappa,tau) [
+
+% System dynamics
+% x' = [t, ey, ep, e_phi, e_the, e_psi]
+f = @(tt,een,eeb,eephi,eethe,eepsi,p,q,r,kappa,tau) [
     (1 - kappa * een) / (v0 * cos(eepsi) * cos(eethe));
     (1 - kappa * een) * tan(eepsi) + tau * eeb;
     (1 - kappa * een) * tan(eethe)/cos(eepsi) - tau * een;
-    p - tau * sin(eepsi);
-    q - kappa + tau*tan(eethe) - tau * sin(eepsi) * tan(eepsi) * tan(eethe) 
+    % (p*cos(eethe) - tau*cos(eepsi) + r*cos(eephi)*sin(eethe) + ...
+    %     q*sin(eephi)*sin(eethe))/cos(eethe);
+    % q*cos(eephi) - r*sin(eephi) + tau*sin(eepsi);
+    % -(kappa*cos(eethe) - r*cos(eephi) - q*sin(eephi) + ...
+    %     tau*cos(eepsi)*sin(eethe))/cos(eethe);
+    (p*cos(eethe) - tau*cos(eepsi) + r*cos(eephi)*sin(eethe))/cos(eethe);
+    q*cos(eephi) + tau*sin(eepsi);
+    -(kappa*cos(eethe) - r + tau*cos(eepsi)*sin(eethe))/cos(eethe);
    ];
 
 for k=1:N % loop over control intervals
@@ -81,22 +89,41 @@ for k=1:N % loop over control intervals
        - path.s_arr(k);
    
    % 1st Order Explicit Euler's Integration
-   k1 = f(X(1,k), X(2,k), X(3,k), X(4,k), X(5,k), U(1,k), U(2,k), kappa, tau);
+   k1 = f(X(1,k), X(2,k), X(3,k), X(4,k), X(5,k), X(6,k),...
+       U(1,k), U(2,k), U(3,k), kappa, tau);
    x_next = X(:,k) + ds * k1;
    
    % Multiple shooting
    opti.subject_to(X(:,k+1)==x_next); % close the gaps
+
+   if k < 2
+    opti.subject_to(U(2,:) == 0.0);
+    opti.subject_to(U(3,:) == 0.0);
+   end
 end
+opti.subject_to(X(1,2:N+1) > X(1,1:N)) % Time must increase!
 
 % Constraints
-opti.subject_to(U(1,:) <= pq_lim);
-opti.subject_to(U(2,:) <= pq_lim);
-opti.subject_to(U(1,:) >= -pq_lim);
-opti.subject_to(U(2,:) >= -pq_lim);
+opti.subject_to(U(1,:) <= pqr_lim);
+opti.subject_to(U(2,:) <= pqr_lim);
+opti.subject_to(U(3,:) <= pqr_lim);
+opti.subject_to(U(1,:) >= -pqr_lim);
+opti.subject_to(U(2,:) >= -pqr_lim);
+opti.subject_to(U(3,:) >= -pqr_lim);
+
+% opti.subject_to(X(4,:) <= 0.2);
+% opti.subject_to(X(4,:) >= 0.2);
+opti.subject_to(X(5,:) <= 1.2);
+opti.subject_to(X(5,:) >= -1.2);
+% opti.subject_to(X(6,:) <= 0.2);
+% opti.subject_to(X(6,:) >= 0.2);
+
+opti.subject_to(U(1,:) == 0.0);
 
 opti.subject_to(t(1) == 0.0);
 opti.subject_to(en(1) == e_n0);
-opti.subject_to(eb(1) == 0.0);
+opti.subject_to(eb(1) == e_b0);
+opti.subject_to(ephi(1) == e_phi0);
 opti.subject_to(epsi(1) == e_psi0);
 opti.subject_to(ethe(1) == e_the0); %%should be nonzero!!! in this convention
 
@@ -120,6 +147,7 @@ ethe_arr = sol.value(ethe);
 
 p_com_arr = sol.value(p_com);
 q_com_arr = sol.value(q_com);
+r_com_arr = sol.value(r_com);
 
 %% 3D Recreation
 x_arr = zeros(length(distance_arr));
@@ -162,18 +190,17 @@ title('dist vs ethe')
 subplot(2,3,6)
 plot(distance_arr(1:end-1), p_com_arr); hold on;
 plot(distance_arr(1:end-1), q_com_arr);
+plot(distance_arr(1:end-1), r_com_arr);
 title('commands')
 
 figure(2)
 p0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
-dcm_b_p = angle2dcm(e_psi0, e_the0, 0);
+dcm_b_p = angle2dcm(e_psi0, e_the0, e_phi0);
 dcm_p_e = angle2dcm(path.yaw_arr(1), path.pitch_arr(1), path.roll_arr(1));
 r = dcm_p_e * [0; e_n0; e_b0] + p0;
-e_n0 = 0.3;
-e_b0 = 0.0;
-for k=1:N-1
-    daspect([1,1,1])
-    plot3(path.x_arr, path.y_arr, path.z_arr); hold on
+for k=1:1:N-1
+    cla;
+    plot3(path.x_arr(1:300), path.y_arr(1:300), path.z_arr(1:300)); hold on
     plot3(x_arr, y_arr, z_arr); grid minor
     dcm_p_e = angle2dcm(path.yaw_arr(k), path.pitch_arr(k), path.roll_arr(k));
     dcm_b_e  = dcm_p_e * dcm_b_p;
@@ -185,14 +212,12 @@ for k=1:N-1
     plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
     plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
     drawnow;
+    daspect([1,1,1])
     dt = time_arr(k+1) - time_arr(k);
     r = r + dcm_b_e * [v0; 0; 0] * dt;
-    % skew_w = skew([p_com_arr(k); q_com_arr(k); 0]);
-    v = [p_com_arr(k), q_com_arr(k), 0];
-    skew_w = [    0 -v(3)  v(2);
-               v(3)     0 -v(1);
-              -v(2)  v(1)     0  ];
-    dcm_b_p = dcm_b_p + dt * dcm_b_p * skew_w;
+    
+    w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)];
+    dcm_b_e = dcm_b_e + dt * dcm_b_e * skew(w_be);
+    dcm_b_p = dcm_p_e' * dcm_b_e;
     pause(0.005)
-    cla;
 end
