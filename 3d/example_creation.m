@@ -6,8 +6,8 @@ clc, clear, close all
 t = linspace(0, 4*pi, 200);  % parametric variable
 
 % Parameters to control shape
-a = 1;      % major amplitude (horizontal)
-b = 1;    % vertical amplitude
+a = 3;      % major amplitude (horizontal)
+b = 3;    % vertical amplitude
 c = 1;    % depth amplitude (3D deviation)
 
 % Parametric equations for 3D figure-eight curve
@@ -102,7 +102,7 @@ for i = 1:1:1000
     nn_arr = [nn_arr, n];
     bb_arr = [bb_arr, b];
 
-    [yaw, pitch, roll] = dcm2angle( [t,n,b], 'zyx', 'robust');
+    [yaw, pitch, roll] = dcm2angle( [t,n,b]', 'zyx', 'robust');
 
     yaw_arr = [yaw_arr, yaw];
     pitch_arr = [pitch_arr, pitch];

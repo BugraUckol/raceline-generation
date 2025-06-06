@@ -4,8 +4,8 @@ clc, clear, close all
 %   given constraints from the past
 
 %% Casadi Imports
-% addpath("/Users/bugrauckol/Documents/share/casadi-3")
-addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties
@@ -21,24 +21,29 @@ X = [t, ey, ez, e_psi, e_the, e_phi]
     - Yaw of the Body Frame wrt. Frenet Frame
     - Pitch of the Body Frame wrt. Frenet Frame
     - Roll of the Body Frame wrt. Frenet Frame
+
+U = [p, q, r] (all wrt. Earth)
+    - Roll rate
+    - Pitch rate
+    - Yaw rate
         ________
 -[X]-->|        |
--[p]-->| System |---[X]->
--[q]-->|________|
+       | System |---[X]->
+-[U]-->|________|
 
 %}
 
 %% Constants
 v0 = 1.0; % Not a state for constant velocity model
-pqr_lim = 2.0;
+pqr_lim = 0.8;
 
 %% Initial conditions
 t0 = 0;
-e_n0 = 0.3;
-e_b0 = 0.0;
+e_n0 = 0.4;
+e_b0 = 0.3;
 e_phi0 = 0.0;
-e_psi0 = 0.2;
-e_the0 = 0.2;
+e_psi0 = 0.0;
+e_the0 = 0.0;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
@@ -62,24 +67,23 @@ r_com = U(3,:);
 % Cost Function
 % Minimize angular velocity inputs p and q
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
-opti.minimize(1.0 * X(2,:) * X(2,:)' + 1.0 * X(3,:) * X(3,:)' ...
-    + 0.0 * X(4,:) * X(4,:)' + 0.0 * X(5,:) * X(5,:)');
+opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
 
 
 % System dynamics
-% x' = [t, ey, ep, e_phi, e_the, e_psi]
+% x* = [t, ey, ep, e_phi, e_the, e_psi] states in spatial formulation
 f = @(tt,een,eeb,eephi,eethe,eepsi,p,q,r,kappa,tau) [
     (1 - kappa * een) / (v0 * cos(eepsi) * cos(eethe));
     (1 - kappa * een) * tan(eepsi) + tau * eeb;
     (1 - kappa * een) * tan(eethe)/cos(eepsi) - tau * een;
-    % (p*cos(eethe) - tau*cos(eepsi) + r*cos(eephi)*sin(eethe) + ...
-    %     q*sin(eephi)*sin(eethe))/cos(eethe);
-    % q*cos(eephi) - r*sin(eephi) + tau*sin(eepsi);
-    % -(kappa*cos(eethe) - r*cos(eephi) - q*sin(eephi) + ...
-    %     tau*cos(eepsi)*sin(eethe))/cos(eethe);
-    (p*cos(eethe) - tau*cos(eepsi) + r*cos(eephi)*sin(eethe))/cos(eethe);
-    q*cos(eephi) + tau*sin(eepsi);
-    -(kappa*cos(eethe) - r + tau*cos(eepsi)*sin(eethe))/cos(eethe);
+    (p*cos(eethe) - tau*cos(eepsi) + r*cos(eephi)*sin(eethe) + ...
+        q*sin(eephi)*sin(eethe))/cos(eethe);
+    q*cos(eephi) - r*sin(eephi) + tau*sin(eepsi);
+    -(kappa*cos(eethe) - r*cos(eephi) - q*sin(eephi) + ...
+        tau*cos(eepsi)*sin(eethe))/cos(eethe);
+    % 0; % + (tau*cos(eepsi))/cos(eethe);
+    % q; % + tau*sin(eepsi);
+    % r; % + (kappa*cos(eethe) + tau*cos(eepsi)*sin(eethe))/cos(eethe);
    ];
 
 for k=1:N % loop over control intervals
@@ -97,11 +101,11 @@ for k=1:N % loop over control intervals
    opti.subject_to(X(:,k+1)==x_next); % close the gaps
 
    if k < 2
-    opti.subject_to(U(2,:) == 0.0);
-    opti.subject_to(U(3,:) == 0.0);
+    opti.subject_to(U(2,k) == 0.0);
+    opti.subject_to(U(3,k) == 0.0);
    end
 end
-opti.subject_to(X(1,2:N+1) > X(1,1:N)) % Time must increase!
+opti.subject_to(t(2:N+1) > t(1:N)) % Time must increase!
 
 % Constraints
 opti.subject_to(U(1,:) <= pqr_lim);
@@ -125,7 +129,7 @@ opti.subject_to(en(1) == e_n0);
 opti.subject_to(eb(1) == e_b0);
 opti.subject_to(ephi(1) == e_phi0);
 opti.subject_to(epsi(1) == e_psi0);
-opti.subject_to(ethe(1) == e_the0); %%should be nonzero!!! in this convention
+opti.subject_to(ethe(1) == e_the0); %%should be nonzero!!! this convention
 
 %% Solve the problem
 opts = struct();
@@ -158,15 +162,15 @@ k = 0;
 for point = distance_arr
     k = k + 1;
 
-    dcm = angle2dcm(path.yaw_arr(k), path.pitch_arr(k), path.roll_arr(k));
-    rpe_vec = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
-    rbp_vec = dcm * [0; en_arr(k); eb_arr(k)];
+    c_p2e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+    rpe_e = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
+    rbp_e = c_p2e * [0; en_arr(k); eb_arr(k)];
 
-    rbe_vec = rpe_vec + rbp_vec;
+    rbe_e = rpe_e + rbp_e;
 
-    x_arr(k) = rbe_vec(1,1);
-    y_arr(k) = rbe_vec(2,1);
-    z_arr(k) = rbe_vec(3,1);
+    x_arr(k) = rbe_e(1,1);
+    y_arr(k) = rbe_e(2,1);
+    z_arr(k) = rbe_e(3,1);
 end
 
 %% Plots
@@ -194,30 +198,40 @@ plot(distance_arr(1:end-1), r_com_arr);
 title('commands')
 
 figure(2)
+plot3(path.x_arr, path.y_arr, path.z_arr); hold on
+plot3(x_arr, y_arr, z_arr); grid minor
+daspect([1,1,1])
 p0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
-dcm_b_p = angle2dcm(e_psi0, e_the0, e_phi0);
-dcm_p_e = angle2dcm(path.yaw_arr(1), path.pitch_arr(1), path.roll_arr(1));
+dcm_b_p = CB2E([e_phi0, e_the0, e_psi0]);
+dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 r = dcm_p_e * [0; e_n0; e_b0] + p0;
+r_hist = [r];
 for k=1:1:N-1
-    cla;
-    plot3(path.x_arr(1:300), path.y_arr(1:300), path.z_arr(1:300)); hold on
-    plot3(x_arr, y_arr, z_arr); grid minor
-    dcm_p_e = angle2dcm(path.yaw_arr(k), path.pitch_arr(k), path.roll_arr(k));
+    % cla;
+    % plot3(path.x_arr, path.y_arr, path.z_arr); hold on
+    % plot3(x_arr, y_arr, z_arr); grid minor
+    dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     dcm_b_e  = dcm_p_e * dcm_b_p;
     px = [r, r + dcm_b_e(:,1)];
     py = [r, r + dcm_b_e(:,2)];
     pz = [r, r + dcm_b_e(:,3)];
     
-    plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
-    plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
-    plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
-    drawnow;
-    daspect([1,1,1])
+    % plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
+    % plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
+    % plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
+    % drawnow;
+    % daspect([1,1,1])
     dt = time_arr(k+1) - time_arr(k);
+    ds = distance_arr(k+1) - distance_arr(k);
+
     r = r + dcm_b_e * [v0; 0; 0] * dt;
-    
-    w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)];
+
+    r_hist = [r_hist, r];
+
+    w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)] * ds / dt;
     dcm_b_e = dcm_b_e + dt * dcm_b_e * skew(w_be);
     dcm_b_p = dcm_p_e' * dcm_b_e;
     pause(0.005)
 end
+
+plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:))
