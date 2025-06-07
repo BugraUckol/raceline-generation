@@ -10,6 +10,7 @@ import casadi.*
 
 %% Import path properties
 path = load('three_d_infinity.mat');
+% path = load('circle_2d.mat');
 
 %% System Model
 %{
@@ -39,15 +40,15 @@ pqr_lim = 0.8;
 
 %% Initial conditions
 t0 = 0;
-e_n0 = 0.4;
-e_b0 = 0.3;
+e_n0 = 0.5;
+e_b0 = 0.0;
 e_phi0 = 0.0;
 e_psi0 = 0.0;
 e_the0 = 0.0;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
-N = 200; %size_vec(2) - 1;
+N = 300; %size_vec(2) - 1;
 
 opti = casadi.Opti();
 
@@ -72,19 +73,15 @@ opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
 
 % System dynamics
 % x* = [t, ey, ep, e_phi, e_the, e_psi] states in spatial formulation
+% ERROR. Negating q equtions seems to fix the initial
 f = @(tt,een,eeb,eephi,eethe,eepsi,p,q,r,kappa,tau) [
     (1 - kappa * een) / (v0 * cos(eepsi) * cos(eethe));
     (1 - kappa * een) * tan(eepsi) + tau * eeb;
-    (1 - kappa * een) * tan(eethe)/cos(eepsi) - tau * een;
-    (p*cos(eethe) - tau*cos(eepsi) + r*cos(eephi)*sin(eethe) + ...
-        q*sin(eephi)*sin(eethe))/cos(eethe);
-    q*cos(eephi) - r*sin(eephi) + tau*sin(eepsi);
-    -(kappa*cos(eethe) - r*cos(eephi) - q*sin(eephi) + ...
-        tau*cos(eepsi)*sin(eethe))/cos(eethe);
-    % 0; % + (tau*cos(eepsi))/cos(eethe);
-    % q; % + tau*sin(eepsi);
-    % r; % + (kappa*cos(eethe) + tau*cos(eepsi)*sin(eethe))/cos(eethe);
-   ];
+    (1 - kappa * een) * tan(eethe) / cos(eepsi) - tau * een;
+    -(tau*v0*cos(eepsi)^2*cos(eethe) - r*cos(eephi)*sin(eethe) - q*sin(eephi)*sin(eethe) - p*cos(eethe) + een*kappa*p*cos(eethe) + een*kappa*r*cos(eephi)*sin(eethe) + een*kappa*q*sin(eephi)*sin(eethe))/(v0*cos(eepsi)*cos(eethe)^2);
+    (q*cos(eephi) - r*sin(eephi) - een*kappa*q*cos(eephi) + een*kappa*r*sin(eephi) + tau*v0*cos(eepsi)*cos(eethe)*sin(eepsi))/(v0*cos(eepsi)*cos(eethe));
+    -(kappa*v0*cos(eepsi)*cos(eethe)^2 - q*sin(eephi) - r*cos(eephi) + een*kappa*r*cos(eephi) + een*kappa*q*sin(eephi) + tau*v0*cos(eepsi)^2*cos(eethe)*sin(eethe))/(v0*cos(eepsi)*cos(eethe)^2)
+];
 
 for k=1:N % loop over control intervals
    kappa = path.kappa_arr(k);
@@ -101,6 +98,7 @@ for k=1:N % loop over control intervals
    opti.subject_to(X(:,k+1)==x_next); % close the gaps
 
    if k < 2
+    opti.subject_to(U(1,k) == 0.0);
     opti.subject_to(U(2,k) == 0.0);
     opti.subject_to(U(3,k) == 0.0);
    end
@@ -122,14 +120,14 @@ opti.subject_to(X(5,:) >= -1.2);
 % opti.subject_to(X(6,:) <= 0.2);
 % opti.subject_to(X(6,:) >= 0.2);
 
-opti.subject_to(U(1,:) == 0.0);
+% opti.subject_to(U(3,:) == 0.0);
 
 opti.subject_to(t(1) == 0.0);
 opti.subject_to(en(1) == e_n0);
 opti.subject_to(eb(1) == e_b0);
 opti.subject_to(ephi(1) == e_phi0);
+opti.subject_to(ethe(1) == e_the0);
 opti.subject_to(epsi(1) == e_psi0);
-opti.subject_to(ethe(1) == e_the0); %%should be nonzero!!! this convention
 
 %% Solve the problem
 opts = struct();
@@ -146,17 +144,18 @@ distance_arr = path.s_arr(1:N+1);
 time_arr = sol.value(t);
 en_arr = sol.value(en);
 eb_arr = sol.value(eb);
-epsi_arr = sol.value(epsi);
+ephi_arr = sol.value(ephi);
 ethe_arr = sol.value(ethe);
+epsi_arr = sol.value(epsi);
 
 p_com_arr = sol.value(p_com);
 q_com_arr = sol.value(q_com);
 r_com_arr = sol.value(r_com);
 
 %% 3D Recreation
-x_arr = zeros(length(distance_arr));
-y_arr = zeros(length(distance_arr));
-z_arr = zeros(length(distance_arr));
+x_arr = zeros(1,length(distance_arr));
+y_arr = zeros(1,length(distance_arr));
+z_arr = zeros(1,length(distance_arr));
 
 k = 0;
 for point = distance_arr
@@ -198,20 +197,22 @@ plot(distance_arr(1:end-1), r_com_arr);
 title('commands')
 
 figure(2)
-plot3(path.x_arr, path.y_arr, path.z_arr); hold on
-plot3(x_arr, y_arr, z_arr); grid minor
+plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 3); hold on
+plot3(x_arr, y_arr, z_arr, 'LineWidth', 3); grid minor
 daspect([1,1,1])
 p0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_b_p = CB2E([e_phi0, e_the0, e_psi0]);
 dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 r = dcm_p_e * [0; e_n0; e_b0] + p0;
+% dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+dcm_b_e  = dcm_p_e * dcm_b_p;
 r_hist = [r];
 for k=1:1:N-1
-    % cla;
-    % plot3(path.x_arr, path.y_arr, path.z_arr); hold on
-    % plot3(x_arr, y_arr, z_arr); grid minor
-    dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
-    dcm_b_e  = dcm_p_e * dcm_b_p;
+    cla;
+    plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 3)
+    plot3(x_arr, y_arr, z_arr, 'LineWidth', 3)
+    plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
+    
     px = [r, r + dcm_b_e(:,1)];
     py = [r, r + dcm_b_e(:,2)];
     pz = [r, r + dcm_b_e(:,3)];
@@ -219,8 +220,7 @@ for k=1:1:N-1
     % plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
     % plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
     % plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
-    % drawnow;
-    % daspect([1,1,1])
+
     dt = time_arr(k+1) - time_arr(k);
     ds = distance_arr(k+1) - distance_arr(k);
 
@@ -228,10 +228,31 @@ for k=1:1:N-1
 
     r_hist = [r_hist, r];
 
-    w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)] * ds / dt;
+    w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)]
     dcm_b_e = dcm_b_e + dt * dcm_b_e * skew(w_be);
-    dcm_b_p = dcm_p_e' * dcm_b_e;
-    pause(0.005)
+    dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+    pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
+    ptx = [pt, pt + dcm_p_e(:,1) * 0.5];
+    pty = [pt, pt + dcm_p_e(:,2) * 0.5];
+    ptz = [pt, pt + dcm_p_e(:,3) * 0.5];
+    % plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 2, 'Color', 'r');
+    % plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 2, 'Color', 'g');
+    % plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 2, 'Color', 'b');
+    
+    dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
+    dcm_gt_e = dcm_p_e * dcm_gt_p;
+    rgt = [x_arr(k); y_arr(k); z_arr(k)];
+    pgtx = [rgt, rgt + dcm_gt_e(:,1) * 0.5];
+    pgty = [rgt, rgt + dcm_gt_e(:,2) * 0.5];
+    pgtz = [rgt, rgt + dcm_gt_e(:,3) * 0.5];
+    
+    plot3(pgtx(1,:), pgtx(2,:), pgtx(3,:), 'LineWidth', 2, 'Color', 'r');
+    plot3(pgty(1,:), pgty(2,:), pgty(3,:), 'LineWidth', 2, 'Color', 'g');
+    plot3(pgtz(1,:), pgtz(2,:), pgtz(3,:), 'LineWidth', 2, 'Color', 'b');
+
+    drawnow;
+    daspect([1,1,1])
+    pause(0.05)
 end
 
-plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:))
+plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
