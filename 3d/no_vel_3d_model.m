@@ -4,8 +4,8 @@ clc, clear, close all
 %   given constraints from the past
 
 %% Casadi Imports
-addpath("/Users/bugrauckol/Documents/share/casadi-3")
-% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+% addpath("/Users/bugrauckol/Documents/share/casadi-3")
+addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties
@@ -40,7 +40,7 @@ pqr_lim = 0.8;
 
 %% Initial conditions
 t0 = 0;
-e_n0 = 0.5;
+e_n0 = 0.0;
 e_b0 = 0.0;
 e_phi0 = 0.0;
 e_psi0 = 0.0;
@@ -48,7 +48,7 @@ e_the0 = 0.0;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
-N = 300; %size_vec(2) - 1;
+N = size_vec(2) - 1;
 
 opti = casadi.Opti();
 
@@ -68,16 +68,23 @@ r_com = U(3,:);
 % Cost Function
 % Minimize angular velocity inputs p and q
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
-opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
+% opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
 
+opti.minimize((t * t'));
+opti.subject_to(X(2,:) <= 2.0);
+opti.subject_to(X(2,:) >= -2.0);
+opti.subject_to(X(3,:) <= 2.0);
+opti.subject_to(X(3,:) >= -2.0);
+opti.subject_to(X(2,end) == 0.0);
+opti.subject_to(X(3,end) == 0.0);
 
 % System dynamics
 % x* = [t, ey, ep, e_phi, e_the, e_psi] states in spatial formulation
-% ERROR. Negating q equtions seems to fix the initial
+% ERROR. Negating the first term of the eeb eqution seems like the fix
 f = @(tt,een,eeb,eephi,eethe,eepsi,p,q,r,kappa,tau) [
     (1 - kappa * een) / (v0 * cos(eepsi) * cos(eethe));
     (1 - kappa * een) * tan(eepsi) + tau * eeb;
-    (1 - kappa * een) * tan(eethe) / cos(eepsi) - tau * een;
+    (1 - kappa * een) * tan(eethe) / cos(eepsi) - tau * een; %% NEGATE
     -(tau*v0*cos(eepsi)^2*cos(eethe) - r*cos(eephi)*sin(eethe) - q*sin(eephi)*sin(eethe) - p*cos(eethe) + een*kappa*p*cos(eethe) + een*kappa*r*cos(eephi)*sin(eethe) + een*kappa*q*sin(eephi)*sin(eethe))/(v0*cos(eepsi)*cos(eethe)^2);
     (q*cos(eephi) - r*sin(eephi) - een*kappa*q*cos(eephi) + een*kappa*r*sin(eephi) + tau*v0*cos(eepsi)*cos(eethe)*sin(eepsi))/(v0*cos(eepsi)*cos(eethe));
     -(kappa*v0*cos(eepsi)*cos(eethe)^2 - q*sin(eephi) - r*cos(eephi) + een*kappa*r*cos(eephi) + een*kappa*q*sin(eephi) + tau*v0*cos(eepsi)^2*cos(eethe)*sin(eethe))/(v0*cos(eepsi)*cos(eethe)^2)
@@ -113,12 +120,8 @@ opti.subject_to(U(1,:) >= -pqr_lim);
 opti.subject_to(U(2,:) >= -pqr_lim);
 opti.subject_to(U(3,:) >= -pqr_lim);
 
-% opti.subject_to(X(4,:) <= 0.2);
-% opti.subject_to(X(4,:) >= 0.2);
 opti.subject_to(X(5,:) <= 1.2);
 opti.subject_to(X(5,:) >= -1.2);
-% opti.subject_to(X(6,:) <= 0.2);
-% opti.subject_to(X(6,:) >= 0.2);
 
 % opti.subject_to(U(3,:) == 0.0);
 
@@ -217,9 +220,9 @@ for k=1:1:N-1
     py = [r, r + dcm_b_e(:,2)];
     pz = [r, r + dcm_b_e(:,3)];
     
-    % plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
-    % plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
-    % plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
+    plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
+    plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
+    plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
 
     dt = time_arr(k+1) - time_arr(k);
     ds = distance_arr(k+1) - distance_arr(k);
@@ -229,15 +232,16 @@ for k=1:1:N-1
     r_hist = [r_hist, r];
 
     w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)]
+    r_bp_p = [0; en_arr(k); eb_arr(k)]
     dcm_b_e = dcm_b_e + dt * dcm_b_e * skew(w_be);
     dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     ptx = [pt, pt + dcm_p_e(:,1) * 0.5];
     pty = [pt, pt + dcm_p_e(:,2) * 0.5];
     ptz = [pt, pt + dcm_p_e(:,3) * 0.5];
-    % plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 2, 'Color', 'r');
-    % plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 2, 'Color', 'g');
-    % plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 2, 'Color', 'b');
+    plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 2, 'Color', 'r');
+    plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 2, 'Color', 'g');
+    plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 2, 'Color', 'b');
     
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_gt_e = dcm_p_e * dcm_gt_p;
