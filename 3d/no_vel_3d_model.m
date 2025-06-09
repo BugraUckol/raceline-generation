@@ -4,8 +4,8 @@ clc, clear, close all
 %   given constraints from the past
 
 %% Casadi Imports
-% addpath("/Users/bugrauckol/Documents/share/casadi-3")
-addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties
@@ -41,14 +41,14 @@ pqr_lim = 0.8;
 %% Initial conditions
 t0 = 0;
 e_n0 = 0.0;
-e_b0 = 0.0;
+e_b0 = 0.5;
 e_phi0 = 0.0;
-e_psi0 = 0.0;
+e_psi0 = 1.0;
 e_the0 = 0.0;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
-N = size_vec(2) - 1;
+N = 300; %size_vec(2) - 1;
 
 opti = casadi.Opti();
 
@@ -68,23 +68,17 @@ r_com = U(3,:);
 % Cost Function
 % Minimize angular velocity inputs p and q
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
-% opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
+opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
+% opti.minimize(1.0 * (t * t'));
 
-opti.minimize((t * t'));
-opti.subject_to(X(2,:) <= 2.0);
-opti.subject_to(X(2,:) >= -2.0);
-opti.subject_to(X(3,:) <= 2.0);
-opti.subject_to(X(3,:) >= -2.0);
-opti.subject_to(X(2,end) == 0.0);
-opti.subject_to(X(3,end) == 0.0);
 
 % System dynamics
 % x* = [t, ey, ep, e_phi, e_the, e_psi] states in spatial formulation
-% ERROR. Negating the first term of the eeb eqution seems like the fix
+% ERROR. Negating q equtions seems to fix the initial
 f = @(tt,een,eeb,eephi,eethe,eepsi,p,q,r,kappa,tau) [
     (1 - kappa * een) / (v0 * cos(eepsi) * cos(eethe));
     (1 - kappa * een) * tan(eepsi) + tau * eeb;
-    (1 - kappa * een) * tan(eethe) / cos(eepsi) - tau * een; %% NEGATE
+    -(1 - kappa * een) * tan(eethe) / cos(eepsi) - tau * een;
     -(tau*v0*cos(eepsi)^2*cos(eethe) - r*cos(eephi)*sin(eethe) - q*sin(eephi)*sin(eethe) - p*cos(eethe) + een*kappa*p*cos(eethe) + een*kappa*r*cos(eephi)*sin(eethe) + een*kappa*q*sin(eephi)*sin(eethe))/(v0*cos(eepsi)*cos(eethe)^2);
     (q*cos(eephi) - r*sin(eephi) - een*kappa*q*cos(eephi) + een*kappa*r*sin(eephi) + tau*v0*cos(eepsi)*cos(eethe)*sin(eepsi))/(v0*cos(eepsi)*cos(eethe));
     -(kappa*v0*cos(eepsi)*cos(eethe)^2 - q*sin(eephi) - r*cos(eephi) + een*kappa*r*cos(eephi) + een*kappa*q*sin(eephi) + tau*v0*cos(eepsi)^2*cos(eethe)*sin(eethe))/(v0*cos(eepsi)*cos(eethe)^2)
@@ -120,10 +114,15 @@ opti.subject_to(U(1,:) >= -pqr_lim);
 opti.subject_to(U(2,:) >= -pqr_lim);
 opti.subject_to(U(3,:) >= -pqr_lim);
 
+% opti.subject_to(X(4,:) <= 0.2);
+% opti.subject_to(X(4,:) >= 0.2);
 opti.subject_to(X(5,:) <= 1.2);
 opti.subject_to(X(5,:) >= -1.2);
-
-% opti.subject_to(U(3,:) == 0.0);
+% opti.subject_to(X(6,:) <= 0.2);
+% opti.subject_to(X(6,:) >= 0.2);
+% 
+% opti.subject_to(U(1,:) == 0.0);
+% opti.subject_to(X(4,:) >= -0.1);
 
 opti.subject_to(t(1) == 0.0);
 opti.subject_to(en(1) == e_n0);
@@ -187,12 +186,11 @@ title('dist vs en')
 subplot(2,3,3)
 plot(distance_arr, eb_arr)
 title('dist vs eb')
-subplot(2,3,4)
-plot(distance_arr, epsi_arr)
-title('dist vs epsi')
-subplot(2,3,5)
+subplot(2,3,[4,5])
+plot(distance_arr, ephi_arr), hold on
 plot(distance_arr, ethe_arr)
-title('dist vs ethe')
+plot(distance_arr, epsi_arr)
+title('dist vs angles'), legend('phi', 'the', 'psi')
 subplot(2,3,6)
 plot(distance_arr(1:end-1), p_com_arr); hold on;
 plot(distance_arr(1:end-1), q_com_arr);
@@ -231,8 +229,7 @@ for k=1:1:N-1
 
     r_hist = [r_hist, r];
 
-    w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)]
-    r_bp_p = [0; en_arr(k); eb_arr(k)]
+    w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)];
     dcm_b_e = dcm_b_e + dt * dcm_b_e * skew(w_be);
     dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
@@ -257,6 +254,14 @@ for k=1:1:N-1
     drawnow;
     daspect([1,1,1])
     pause(0.05)
+
+    path.kappa_arr(k)
+    path.tau_arr(k)
+    ephi_arr(k)*57
+    ethe_arr(k)*57
+    epsi_arr(k)*57
+    en_arr(k)
+    eb_arr(k)
 end
 
 plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
