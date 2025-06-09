@@ -74,7 +74,6 @@ opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
 
 % System dynamics
 % x* = [t, ey, ep, e_phi, e_the, e_psi] states in spatial formulation
-% ERROR. Negating q equtions seems to fix the initial
 f = @(tt,een,eeb,eephi,eethe,eepsi,p,q,r,kappa,tau) [
     (1 - kappa * een) / (v0 * cos(eepsi) * cos(eethe));
     (1 - kappa * een) * tan(eepsi) + tau * eeb;
@@ -254,14 +253,6 @@ for k=1:1:N-1
     drawnow;
     daspect([1,1,1])
     pause(0.05)
-
-    path.kappa_arr(k)
-    path.tau_arr(k)
-    ephi_arr(k)*57
-    ethe_arr(k)*57
-    epsi_arr(k)*57
-    en_arr(k)
-    eb_arr(k)
 end
 
 plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
