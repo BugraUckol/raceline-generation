@@ -48,7 +48,7 @@ e_the0 = 0.0;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
-N = 300; %size_vec(2) - 1;
+N = size_vec(2) - 1;
 
 opti = casadi.Opti();
 
@@ -68,8 +68,8 @@ r_com = U(3,:);
 % Cost Function
 % Minimize angular velocity inputs p and q
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
-opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
-% opti.minimize(1.0 * (t * t'));
+% opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
+opti.minimize(1.0 * (t * t'));
 
 
 % System dynamics
@@ -122,6 +122,11 @@ opti.subject_to(X(5,:) >= -1.2);
 % 
 % opti.subject_to(U(1,:) == 0.0);
 % opti.subject_to(X(4,:) >= -0.1);
+
+opti.subject_to(X(2,:) <= 1.2);
+opti.subject_to(X(2,:) >= -1.2);
+opti.subject_to(X(3,:) <= 1.2);
+opti.subject_to(X(3,:) >= -1.2);
 
 opti.subject_to(t(1) == 0.0);
 opti.subject_to(en(1) == e_n0);
@@ -207,19 +212,22 @@ r = dcm_p_e * [0; e_n0; e_b0] + p0;
 % dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
 dcm_b_e  = dcm_p_e * dcm_b_p;
 r_hist = [r];
+edges = [0, 0, 0, 0, 0;
+         1.2, -1.2, -1.2, 1.2, 1.2;
+         1.2, 1.2, -1.2, -1.2, 1.2];
 for k=1:1:N-1
     cla;
     plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 3)
     plot3(x_arr, y_arr, z_arr, 'LineWidth', 3)
-    plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
+    % plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
     
     px = [r, r + dcm_b_e(:,1)];
     py = [r, r + dcm_b_e(:,2)];
     pz = [r, r + dcm_b_e(:,3)];
     
-    plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
-    plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
-    plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
+    % plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
+    % plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
+    % plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
 
     dt = time_arr(k+1) - time_arr(k);
     ds = distance_arr(k+1) - distance_arr(k);
@@ -238,6 +246,9 @@ for k=1:1:N-1
     plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 2, 'Color', 'r');
     plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 2, 'Color', 'g');
     plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 2, 'Color', 'b');
+
+    edges_e = pt + dcm_p_e * edges;
+    plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
     
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_gt_e = dcm_p_e * dcm_gt_p;
@@ -255,4 +266,4 @@ for k=1:1:N-1
     pause(0.05)
 end
 
-plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
+% plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
