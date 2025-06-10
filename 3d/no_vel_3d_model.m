@@ -41,9 +41,9 @@ pqr_lim = 0.8;
 %% Initial conditions
 t0 = 0;
 e_n0 = 0.0;
-e_b0 = 0.5;
+e_b0 = 0.0;
 e_phi0 = 0.0;
-e_psi0 = 1.0;
+e_psi0 = 0.0;
 e_the0 = 0.0;
 
 %% Setting Optimization Problem
@@ -117,8 +117,8 @@ opti.subject_to(U(3,:) >= -pqr_lim);
 % opti.subject_to(X(4,:) >= 0.2);
 opti.subject_to(X(5,:) <= 1.2);
 opti.subject_to(X(5,:) >= -1.2);
-% opti.subject_to(X(6,:) <= 0.2);
-% opti.subject_to(X(6,:) >= 0.2);
+opti.subject_to(X(6,:) <= 1.2);
+opti.subject_to(X(6,:) >= -1.2);
 % 
 % opti.subject_to(U(1,:) == 0.0);
 % opti.subject_to(X(4,:) >= -0.1);
@@ -134,6 +134,9 @@ opti.subject_to(eb(1) == e_b0);
 opti.subject_to(ephi(1) == e_phi0);
 opti.subject_to(ethe(1) == e_the0);
 opti.subject_to(epsi(1) == e_psi0);
+
+opti.subject_to(en(end) == 0.0);
+opti.subject_to(eb(end) == 0.0);
 
 %% Solve the problem
 opts = struct();
@@ -202,8 +205,8 @@ plot(distance_arr(1:end-1), r_com_arr);
 title('commands')
 
 figure(2)
-plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 3); hold on
-plot3(x_arr, y_arr, z_arr, 'LineWidth', 3); grid minor
+plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2); hold on
+plot3(x_arr, y_arr, z_arr, 'LineWidth', 2); grid minor
 daspect([1,1,1])
 p0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_b_p = CB2E([e_phi0, e_the0, e_psi0]);
@@ -215,10 +218,11 @@ r_hist = [r];
 edges = [0, 0, 0, 0, 0;
          1.2, -1.2, -1.2, 1.2, 1.2;
          1.2, 1.2, -1.2, -1.2, 1.2];
+edges_e_list = [];
 for k=1:1:N-1
     cla;
-    plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 3)
-    plot3(x_arr, y_arr, z_arr, 'LineWidth', 3)
+    plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2)
+    plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
     % plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
     
     px = [r, r + dcm_b_e(:,1)];
@@ -240,27 +244,34 @@ for k=1:1:N-1
     dcm_b_e = dcm_b_e + dt * dcm_b_e * skew(w_be);
     dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
-    ptx = [pt, pt + dcm_p_e(:,1) * 0.5];
-    pty = [pt, pt + dcm_p_e(:,2) * 0.5];
-    ptz = [pt, pt + dcm_p_e(:,3) * 0.5];
-    plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 2, 'Color', 'r');
-    plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 2, 'Color', 'g');
-    plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 2, 'Color', 'b');
+    ptx = [pt, pt + dcm_p_e(:,1) * 1.5];
+    pty = [pt, pt + dcm_p_e(:,2) * 1.5];
+    ptz = [pt, pt + dcm_p_e(:,3) * 1.5];
+    plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 3, 'Color', 'r');
+    plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 3, 'Color', 'g');
+    plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 3, 'Color', 'b');
 
     edges_e = pt + dcm_p_e * edges;
-    plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
-    
+    load edges_e_list
+    for ie = 1:5:998
+        edges_ei = edges_e_list(:,:,ie);
+        plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15)
+    end
+    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+    % plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_gt_e = dcm_p_e * dcm_gt_p;
     rgt = [x_arr(k); y_arr(k); z_arr(k)];
-    pgtx = [rgt, rgt + dcm_gt_e(:,1) * 0.5];
-    pgty = [rgt, rgt + dcm_gt_e(:,2) * 0.5];
-    pgtz = [rgt, rgt + dcm_gt_e(:,3) * 0.5];
+    pgtx = [rgt, rgt + dcm_gt_e(:,1) * 1.5];
+    pgty = [rgt, rgt + dcm_gt_e(:,2) * 1.5];
+    pgtz = [rgt, rgt + dcm_gt_e(:,3) * 1.5];
     
-    plot3(pgtx(1,:), pgtx(2,:), pgtx(3,:), 'LineWidth', 2, 'Color', 'r');
-    plot3(pgty(1,:), pgty(2,:), pgty(3,:), 'LineWidth', 2, 'Color', 'g');
-    plot3(pgtz(1,:), pgtz(2,:), pgtz(3,:), 'LineWidth', 2, 'Color', 'b');
-
+    plot3(pgtx(1,:), pgtx(2,:), pgtx(3,:), 'LineWidth', 3, 'Color', 'r');
+    plot3(pgty(1,:), pgty(2,:), pgty(3,:), 'LineWidth', 3, 'Color', 'g');
+    plot3(pgtz(1,:), pgtz(2,:), pgtz(3,:), 'LineWidth', 3, 'Color', 'b');
     drawnow;
     daspect([1,1,1])
     pause(0.05)
