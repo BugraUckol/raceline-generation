@@ -40,10 +40,10 @@ pqr_lim = 0.8;
 
 %% Initial conditions
 t0 = 0;
-e_n0 = 0.0;
+e_n0 = 1.0;
 e_b0 = 0.0;
 e_phi0 = 0.0;
-e_psi0 = 0.0;
+e_psi0 = 0.5;
 e_the0 = 0.0;
 
 %% Setting Optimization Problem
@@ -68,8 +68,8 @@ r_com = U(3,:);
 % Cost Function
 % Minimize angular velocity inputs p and q
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
-% opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
-opti.minimize(1.0 * (t * t'));
+opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
+% opti.minimize(1.0 * (t * t'));
 
 
 % System dynamics
@@ -253,14 +253,14 @@ for k=1:1:N-1
 
     edges_e = pt + dcm_p_e * edges;
     load edges_e_list
-    for ie = 1:5:998
-        edges_ei = edges_e_list(:,:,ie);
-        plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15)
-    end
-    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+    % for ie = 1:5:998
+    %     edges_ei = edges_e_list(:,:,ie);
+    %     plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15)
+    % end
+    % plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+    % plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+    % plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+    % plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
     % plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_gt_e = dcm_p_e * dcm_gt_p;

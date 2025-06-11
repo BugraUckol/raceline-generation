@@ -8,9 +8,9 @@
 * $\bar\omega_{B/E}^{(B)} = [p, q, r]^T $ : Angular velocity of the $F_{B}$ wrt. $F_{E}$ resolved in $F_{B}$
 * $\bar\omega_{P/E}^{(P)} = \dot{s}[\tau, 0, \kappa]^T $ : Angular velocity of the $F_{P}$ wrt. $F_{E}$ resolved in $F_{P}$
 * $\Phi = [e_\phi, e_\theta, e_\psi]^T$    
-    * $e_\phi$ : Roll error of the $F_{B}$ wrt. $F_{E}$
-    * $e_\theta$ : Pitch error of the $F_{B}$ wrt. $F_{E}$
-    * $e_\psi$ : Yaw error of the $F_{B}$ wrt. $F_{E}$
+    * $e_\phi$ : Roll error of the $F_{B}$ wrt. $F_{P}$
+    * $e_\theta$ : Pitch error of the $F_{B}$ wrt. $F_{P}$
+    * $e_\psi$ : Yaw error of the $F_{B}$ wrt. $F_{P}$
 * $ \hat{C}_{BE}^{(B)}$ : Transformation matrix that transforms elements of the $F_{B}$ to $F_{E}$ observed in the $F_{B}$
 * $ \hat{C}_{PE}^{(P)}$ : Transformation matrix that transforms elements of the $F_{P}$ to $F_{E}$ observed in the $F_{P}$
 
