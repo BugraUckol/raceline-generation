@@ -38,7 +38,7 @@ $\bar R_{B/P}^{(P)} = \begin{bmatrix}
                     \end{bmatrix}$
 
 $\bar V^{(P)} = 
-\begin{bmatrix}
+u\begin{bmatrix}
   cos(e_{\theta})cos(e_{\psi})\\
   cos(e_{\theta})sin(e_{\psi}) \\
   -sin(e_{\theta})
