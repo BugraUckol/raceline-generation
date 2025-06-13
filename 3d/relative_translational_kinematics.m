@@ -92,15 +92,33 @@ eq4_rhs = simplify(W2ED(w_bp_b, E));
 eq4 = E_dot == eq4_rhs;
 
 %% Equations
-eq_u_dot = (isolate(eq1(1), u_dot));
-eq_v_dot = (isolate(eq1(2), v_dot));
-eq_w_dot = (isolate(eq1(3), w_dot));
-eq_p_dot = (isolate(eq2(1), p_dot));
-eq_q_dot = (isolate(eq2(2), q_dot));
-eq_r_dot = (isolate(eq2(3), r_dot));
-eq_s_dot = (isolate(eq3(1), s_dot));
-eq_en_dot = (isolate(eq3(2), en_dot));
-eq_eb_dot = (isolate(eq3(3), eb_dot));
-eq_phi_dot = (isolate(eq4(1), phi_dot));
-eq_the_dot = (isolate(eq4(2), the_dot));
-eq_psi_dot = (isolate(eq4(3), psi_dot));
+eq_u_dot = rhs((isolate(eq1(1), u_dot)));
+eq_v_dot = rhs((isolate(eq1(2), v_dot)));
+eq_w_dot = rhs((isolate(eq1(3), w_dot)));
+eq_p_dot = rhs((isolate(eq2(1), p_dot)));
+eq_q_dot = rhs((isolate(eq2(2), q_dot)));
+eq_r_dot = rhs((isolate(eq2(3), r_dot)));
+eq_s_dot = rhs((isolate(eq3(1), s_dot)));
+eq_en_dot = rhs((isolate(eq3(2), en_dot)));
+eq_eb_dot = rhs((isolate(eq3(3), eb_dot)));
+eq_phi_dot = rhs((isolate(eq4(1), phi_dot)));
+eq_the_dot = rhs((isolate(eq4(2), the_dot)));
+eq_psi_dot = rhs((isolate(eq4(3), psi_dot)));
+
+%% Spatial transformation
+eq_t_ds = 1/eq_s_dot;
+
+eq_u_ds = simplify(eq_u_dot * eq_t_ds);
+eq_v_ds = simplify(eq_v_dot * eq_t_ds);
+eq_w_ds = simplify(eq_w_dot * eq_t_ds);
+
+eq_p_ds = simplify(eq_p_dot * eq_t_ds);
+eq_q_ds = simplify(eq_q_dot * eq_t_ds);
+eq_r_ds = simplify(eq_r_dot * eq_t_ds);
+
+eq_en_ds = simplify(subs(eq_en_dot, s_dot, eq_s_dot) * eq_t_ds);
+eq_eb_ds = simplify(subs(eq_eb_dot, s_dot, eq_s_dot) * eq_t_ds);
+
+eq_phi_ds = simplify(subs(eq_phi_dot, s_dot, eq_s_dot) * eq_t_ds);
+eq_the_ds = simplify(subs(eq_the_dot, s_dot, eq_s_dot) * eq_t_ds);
+eq_psi_ds = simplify(subs(eq_psi_dot, s_dot, eq_s_dot) * eq_t_ds);
