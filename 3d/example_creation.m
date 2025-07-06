@@ -3,7 +3,7 @@ clc, clear, close all
 
 %% Curve Generation
 % Parameter
-t = linspace(0, 4*pi, 200);  % parametric variable
+t = linspace(0, pi, 200);  % parametric variable
 
 % Parameters to control shape
 a = 3;      % major amplitude (horizontal)
@@ -66,8 +66,8 @@ for i = 1:1:1000
     cla;
     plot3(x, y, z, 'k', 'LineWidth', 2);
 
-    ts_e = i * 2*pi / 1000 + start;
-    dt = 2*pi / 1000;
+    ts_e = i * pi / 1000 + start;
+    dt = pi / 1000;
     p = double(subs(r, t_s, ts_e));
     ds = norm(p - p_prev);
 
@@ -144,5 +144,5 @@ legend('Curvature','Torsion')
 
 display(strcat('Problematic points are', 20, num2str(err_idx')))
 
-save three_d_infinity s_arr x_arr y_arr z_arr kappa_arr tau_arr tt_arr ...
+save three_d_infinity_half s_arr x_arr y_arr z_arr kappa_arr tau_arr tt_arr ...
     nn_arr bb_arr yaw_arr pitch_arr roll_arr

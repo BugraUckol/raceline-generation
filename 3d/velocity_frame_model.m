@@ -9,7 +9,7 @@ addpath("/Users/bugrauckol/Documents/share/casadi-3")
 import casadi.*
 
 %% Import path properties
-path = load('three_d_infinity_half.mat');
+path = load('three_d_infinity.mat');
 % path = load('circle_2d.mat');
 
 %% System Model
@@ -252,16 +252,16 @@ for k=1:1:N-1
     plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 3, 'Color', 'b');
 
     edges_e = pt + dcm_p_e * edges;
-    load edges_e_list_half
-    for ie = 1:5:500
-        edges_ei = edges_e_list(:,:,ie);
-        plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15)
-    end
-    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
-    plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
+    load edges_e_list
+    % for ie = 1:5:998
+    %     edges_ei = edges_e_list(:,:,ie);
+    %     plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15)
+    % end
+    % plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+    % plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+    % plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+    % plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+    % plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_gt_e = dcm_p_e * dcm_gt_p;
     rgt = [x_arr(k); y_arr(k); z_arr(k)];
@@ -278,17 +278,3 @@ for k=1:1:N-1
 end
 
 % plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
-% 
-% h_ref   = plot3(NaN, NaN, NaN, 'k.-', 'LineWidth', 6);
-% h_start = plot3(NaN, NaN, NaN, 'g-',  'LineWidth', 4);
-% h_end   = plot3(NaN, NaN, NaN, 'r-',  'LineWidth', 4);
-% h_bound = plot3(NaN, NaN, NaN, 'k-',  'LineWidth', 0.15);
-% 
-% legend([h_ref, h_start, h_end, h_bound], ...
-%        {'Reference Line', ...
-%         'Start', ...
-%         'End', ...
-%         'Bounds'});
-% xlabel('x[m]')
-% ylabel('y[m]')
-% zlabel('z[m]')

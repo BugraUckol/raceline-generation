@@ -5,7 +5,7 @@ clc, clear, close all
 
 %% Casadi Imports
 % addpath("/Users/bugrauckol/Documents/share/casadi-3")
-addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties

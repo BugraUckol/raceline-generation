@@ -7,6 +7,8 @@ I_xx = sym("I_xx","real");
 I_yy = sym("I_yy","real");
 I_zz = sym("I_zz","real");
 
+t = sym("t","real");
+
 u = sym("u","real");
 v = sym("v","real");
 w = sym("w","real");
@@ -31,13 +33,13 @@ s_dot = sym("s_dot","real");
 en_dot = sym("en_dot","real");
 eb_dot = sym("eb_dot","real");
 
-phi = sym("ephi","real");
-the = sym("ethe","real");
-psi = sym("epsi","real");
+e_phi = sym("e_phi","real");
+e_the = sym("e_the","real");
+e_psi = sym("e_psi","real");
 
-phi_dot = sym("ephi_dot","real");
-the_dot = sym("ethe_dot","real");
-psi_dot = sym("epsi_dot","real");
+e_phi_dot = sym("e_phi_dot","real");
+e_the_dot = sym("e_the_dot","real");
+e_psi_dot = sym("e_psi_dot","real");
 
 tau = sym("tau","real");
 kappa = sym("kappa","real");
@@ -48,7 +50,7 @@ Mz = sym("Mz","real");
 Fz = sym("Fz","real");
 
 %% Transformations
-E = [phi, the, psi];
+E = [e_phi, e_the, e_psi];
 Cb2p = CB2E(E);
 Cp2b = CE2B(E);
 
@@ -61,7 +63,7 @@ Dp_R_bp_p = [0; en_dot; eb_dot];
 De_R_be_b = [u; v; w];
 De_R_be_p = Cb2p * De_R_be_b;
 Db_w_be_b = [p_dot; q_dot; r_dot];
-E_dot = [phi_dot; the_dot; psi_dot];
+E_dot = [e_phi_dot; e_the_dot; e_psi_dot];
 
 %% Rigid Body Dynamics
 F_b = [0; 0; Fz];
@@ -80,7 +82,7 @@ kinematic_rhs = De_R_pe_p + Dp_R_bp_p  + cross(w_pe_p, R_bp_p);
 eq3 = kinematic_lhs == kinematic_rhs;
 
 %% Rotational Relations
-dsdt = u * cos(psi) * cos(the) / (1 - kappa * en);
+dsdt = u * cos(e_psi) * cos(e_the) / (1 - kappa * en);
 dtds = 1 / dsdt;
 
 w_pe_b = Cp2b * w_pe_p;
@@ -101,9 +103,9 @@ eq_r_dot = rhs((isolate(eq2(3), r_dot)));
 eq_s_dot = rhs((isolate(eq3(1), s_dot)));
 eq_en_dot = rhs((isolate(eq3(2), en_dot)));
 eq_eb_dot = rhs((isolate(eq3(3), eb_dot)));
-eq_phi_dot = rhs((isolate(eq4(1), phi_dot)));
-eq_the_dot = rhs((isolate(eq4(2), the_dot)));
-eq_psi_dot = rhs((isolate(eq4(3), psi_dot)));
+eq_phi_dot = rhs((isolate(eq4(1), e_phi_dot)));
+eq_the_dot = rhs((isolate(eq4(2), e_the_dot)));
+eq_psi_dot = rhs((isolate(eq4(3), e_psi_dot)));
 
 %% Spatial transformation
 eq_t_ds = 1/eq_s_dot;
@@ -122,3 +124,21 @@ eq_eb_ds = simplify(subs(eq_eb_dot, s_dot, eq_s_dot) * eq_t_ds);
 eq_phi_ds = simplify(subs(eq_phi_dot, s_dot, eq_s_dot) * eq_t_ds);
 eq_the_ds = simplify(subs(eq_the_dot, s_dot, eq_s_dot) * eq_t_ds);
 eq_psi_ds = simplify(subs(eq_psi_dot, s_dot, eq_s_dot) * eq_t_ds);
+
+%% Accelerations
+syms t;
+syms ut(t);
+syms vt(t);
+syms wt(t);
+syms e_phit(t);
+syms e_thet(t);
+syms e_psit(t);
+syms sdt(t);
+
+eq_s_dot(t) = -(w*(sin(e_phit)*sin(e_psit) + cos(e_phit)*cos(e_psit)*sin(e_thet)) - v*(cos(e_phit)*sin(e_psit) - cos(e_psit)*sin(e_phit)*sin(e_thet)) + u*cos(e_psit)*cos(e_thet))/(en*kappa - 1)
+
+eq_s_dot = subs(eq_s_dot, u, ut);
+eq_s_dot = subs(eq_s_dot, v, vt);
+eq_s_dot = subs(eq_s_dot, w, wt);
+
+eq_d_ddot = diff(eq_s_dot, t)
