@@ -40,10 +40,10 @@ pqr_lim = 0.8;
 
 %% Initial conditions
 t0 = 0;
-e_n0 = 1.0;
+e_n0 = 0.0;
 e_b0 = 0.0;
 e_phi0 = 0.0;
-e_psi0 = 0.5;
+e_psi0 = 0.0;
 e_the0 = 0.0;
 
 %% Setting Optimization Problem
@@ -68,8 +68,9 @@ r_com = U(3,:);
 % Cost Function
 % Minimize angular velocity inputs p and q
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
-opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
+% opti.minimize(1.0 * (en * en') + 1.0 * (eb * eb'));
 % opti.minimize(1.0 * (t * t'));
+opti.minimize(t(end));
 
 
 % System dynamics
@@ -135,8 +136,8 @@ opti.subject_to(ephi(1) == e_phi0);
 opti.subject_to(ethe(1) == e_the0);
 opti.subject_to(epsi(1) == e_psi0);
 
-opti.subject_to(en(end) == 0.0);
-opti.subject_to(eb(end) == 0.0);
+% opti.subject_to(en(end) == 0.0);
+% opti.subject_to(eb(end) == 0.0);
 
 %% Solve the problem
 opts = struct();
@@ -219,7 +220,7 @@ edges = [0, 0, 0, 0, 0;
          1.2, -1.2, -1.2, 1.2, 1.2;
          1.2, 1.2, -1.2, -1.2, 1.2];
 edges_e_list = [];
-for k=1:1:N-1
+for k=1:2:N-1
     cla;
     plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2)
     plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
@@ -261,7 +262,7 @@ for k=1:1:N-1
     plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
     plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
     plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
-    plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
+    % plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_gt_e = dcm_p_e * dcm_gt_p;
     rgt = [x_arr(k); y_arr(k); z_arr(k)];
