@@ -9,8 +9,8 @@ clc, clear, close all
 import casadi.*
 
 %% Import path properties
-path = load('three_d_infinity.mat');
-% path = load('circle_2d.mat');
+% path = load('three_d_infinity.mat');
+path = load('circle_2d.mat');
 
 %% System Model
 %{
@@ -27,7 +27,7 @@ U = [Fz, Mx, My, Mz]
 
 %% Constants
 Fz_lim = 10;
-M_lim = 10.0;
+M_lim = 100.0;
 I_xx = 1;
 I_yy = 1;
 I_zz = 1;
@@ -43,7 +43,7 @@ q0 = 0.0;
 r0 = 0.0;
 
 t0 = 0;
-e_n0 = 0.1;
+e_n0 = 0.0;
 e_b0 = 0.0;
 
 e_phi0 = 0.0;
@@ -52,7 +52,7 @@ e_the0 = 0.0;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
-N = 150; % size_vec(2) - 1;
+N = 500; %size_vec(2) - 1;
 
 opti = casadi.Opti();
 
@@ -79,9 +79,9 @@ Mz = U(4,:);
 % Cost Function
 % Minimize angular velocity inputs p and q
 % opti.minimize(1.0 * U(1,:) * U(1,:)' + 1.0 * U(2,:) * U(2,:)');
-opti.minimize(10.0 * (en * en') + 1.0 * (eb * eb') + ...
-    0.1 * (p * p') + 0.1 * (q * q') + 0.1 * (r * r'));
-% opti.minimize(1.0 * (t * t'));
+% opti.minimize(0.0 * (en * en') + 0.0 * (eb * eb') + ...
+%     0.0 * (p * p') + 0.0 * (q * q') + 0.0 * (r * r'));
+opti.minimize(t(end));
 
 % System dynamics
 % x* = [t,u,v,w,p,q,r,en,eb,ephi,ethe,epsi] states in spatial formulation
@@ -121,16 +121,17 @@ opti.subject_to(t(2:N+1) > t(1:N)) % Time must increase!
 opti.subject_to(U(1,:) <= Fz_lim);
 opti.subject_to(U(2,:) <= M_lim);
 opti.subject_to(U(3,:) <= M_lim);
-opti.subject_to(U(4,:) <= M_lim);
-opti.subject_to(U(1,:) >= -Fz_lim);
+% opti.subject_to(U(4,:) <= M_lim);
+opti.subject_to(U(1,:) >= 0);
 opti.subject_to(U(2,:) >= -M_lim);
 opti.subject_to(U(3,:) >= -M_lim);
-opti.subject_to(U(4,:) >= -M_lim);
+% opti.subject_to(U(4,:) >= -M_lim);
+opti.subject_to(U(4,:) == 0)
 
-opti.subject_to(X(8,:) <= 1.2);
-opti.subject_to(X(8,:) >= -1.2);
-opti.subject_to(X(9,:) <= 1.2);
-opti.subject_to(X(9,:) >= -1.2);
+opti.subject_to(X(8,:) <= 0.5);
+opti.subject_to(X(8,:) >= -0.5);
+opti.subject_to(X(9,:) <= 0.5);
+opti.subject_to(X(9,:) >= -0.5);
 
 opti.subject_to(t(1) == 0.0);
 opti.subject_to(u(1) == u0);
@@ -145,8 +146,8 @@ opti.subject_to(ephi(1) == e_phi0);
 opti.subject_to(ethe(1) == e_the0);
 opti.subject_to(epsi(1) == e_psi0);
 
-opti.subject_to(en(end) == 0.0);
-opti.subject_to(eb(end) == 0.0);
+% opti.subject_to(en(end) == 0.0);
+% opti.subject_to(eb(end) == 0.0);
 
 % Initial Guess
 opti.set_initial(u, 1);
@@ -251,9 +252,9 @@ for k=1:1:N-1
     py = [r, r + dcm_b_e(:,2)];
     pz = [r, r + dcm_b_e(:,3)];
     
-    % plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
-    % plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
-    % plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
+    plot3(px(1,:), px(2,:), px(3,:), 'LineWidth', 2, 'Color', 'r');
+    plot3(py(1,:), py(2,:), py(3,:), 'LineWidth', 2, 'Color', 'g');
+    plot3(pz(1,:), pz(2,:), pz(3,:), 'LineWidth', 2, 'Color', 'b');
 
     dt = time_arr(k+1) - time_arr(k);
     ds = distance_arr(k+1) - distance_arr(k);
