@@ -9,8 +9,8 @@ addpath("/Users/bugrauckol/Documents/share/casadi-3")
 import casadi.*
 
 %% Import path properties
-path = load('three_d_infinity_half.mat');
-% path = load('circle_2d.mat');
+% path = load('three_d_infinity_half.mat');
+path = load('circle_2d.mat');
 
 %% System Model
 %{
@@ -122,11 +122,6 @@ for k=1:N % loop over control intervals
    % Multiple shooting
    opti.subject_to(X(:,k+1)==x_next); % close the gaps
 
-   if k < 2
-    opti.subject_to(U(1,k) == 0.0);
-    opti.subject_to(U(2,k) == 0.0);
-    opti.subject_to(U(3,k) == 0.0);
-   end
 end
 opti.subject_to(t(2:N+1) > t(1:N)) % Time must increase!
 
@@ -156,14 +151,14 @@ opti.subject_to(X(3,:) <= 1.2);
 opti.subject_to(X(3,:) >= -1.2);
 
 opti.subject_to(t(1) == 0.0);
-opti.subject_to(en(1) == e_n0);
-opti.subject_to(eb(1) == e_b0);
-opti.subject_to(ephi(1) == e_phi0);
-opti.subject_to(ethe(1) == e_the0);
-opti.subject_to(epsi(1) == e_psi0);
+% opti.subject_to(en(1) == e_n0);
+% opti.subject_to(eb(1) == e_b0);
+% opti.subject_to(ephi(1) == e_phi0);
+% opti.subject_to(ethe(1) == e_the0);
+% opti.subject_to(epsi(1) == e_psi0);
 opti.subject_to(vv(1) == v0);
-opti.subject_to(alphav(1) == alpha0);
-opti.subject_to(betav(1) == beta0);
+% opti.subject_to(alphav(1) == alpha0);
+% opti.subject_to(betav(1) == beta0);
 
 opti.set_initial(vv, 1);
 
@@ -320,8 +315,12 @@ for k=1:2:N-1
 
     % Plot Thrust Vector
     dcm_b_v = CB2W(alpha_arr(k), beta_arr(k));
-    dcm_v_e = dcm_gt_e * dcm_b_v;
-    pvz = [rgt, rgt + dcm_v_e(:,3) * T_com_arr(k)];
+    dcm_b_e = dcm_gt_e * dcm_b_v;
+    pvx = [rgt, rgt + dcm_b_e(:,1) * 1];
+    pvy = [rgt, rgt + dcm_b_e(:,2) * 1];
+    pvz = [rgt, rgt + dcm_b_e(:,3) * T_com_arr(k)];
+    plot3(pvx(1,:), pvx(2,:), pvx(3,:), 'LineWidth', 3, 'Color', 'm');
+    plot3(pvy(1,:), pvy(2,:), pvy(3,:), 'LineWidth', 3, 'Color', 'm');
     plot3(pvz(1,:), pvz(2,:), pvz(3,:), 'LineWidth', 3, 'Color', 'm');
 
     drawnow;
