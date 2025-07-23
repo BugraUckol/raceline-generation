@@ -4,13 +4,14 @@ clc, clear, close all
 %   given constraints from the past
 
 %% Casadi Imports
-addpath("/Users/bugrauckol/Documents/share/casadi-3")
-% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+% addpath("/Users/bugrauckol/Documents/share/casadi-3")
+addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties
-% path = load('three_d_infinity_half.mat');
-path = load('circle_2d.mat');
+% path = load('three_d_infinity.mat');
+% path = load('circle_2d.mat');
+path = load('trefoil.mat');
 
 %% System Model
 %{
@@ -35,10 +36,11 @@ U = [p, q, r] (all wrt. Earth)
 %}
 
 %% Constants
-pqr_lim = 0.8;
-T_max = 10;
+pqr_lim = 20;
+T_max = 5;
 T_min = 0;
-m = 1;
+m = 0.250;
+cv_lin = 0.00735;
 
 %% Initial conditions
 t0 = 0;
@@ -100,7 +102,7 @@ f = @(tt,een,eeb,eephi,eethe,eepsi,v,alpha,beta,T,p,q,r,kappa,tau) [
     % depsi / ds
     -(kappa*v*cos(eepsi)*cos(eethe)^2 - (T * cos(alpha) / m / v)*sin(eephi) - (-T * sin(alpha) * sin(beta) / m / v)*cos(eephi) + een*kappa*(-T * sin(alpha) * sin(beta) / m / v)*cos(eephi) + een*kappa*(T * cos(alpha) / m / v)*sin(eephi) + tau*v*cos(eepsi)^2*cos(eethe)*sin(eethe))/(v*cos(eepsi)*cos(eethe)^2);
     % dv / ds
-    (T*sin(alpha)*cos(beta) / m) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
+    (T*sin(alpha)*cos(beta) / m - (cv_lin * v) / m) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     % dalpha / ds
     ((q*cos(beta) - p*cos(alpha)*sin(beta) - r*sin(alpha)*sin(beta)) + T*cos(alpha)/m) / cos(beta) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     % dbeta / ds
@@ -137,18 +139,19 @@ opti.subject_to(U(4,:) >= -pqr_lim);
 
 % opti.subject_to(X(4,:) <= 0.2);
 % opti.subject_to(X(4,:) >= 0.2);
-% opti.subject_to(X(5,:) <= 1.2);
-% opti.subject_to(X(5,:) >= -1.2);
-% opti.subject_to(X(6,:) <= 1.2);
-% opti.subject_to(X(6,:) >= -1.2);
+% opti.subject_to(X(5,:) <= 0.5);
+% opti.subject_to(X(5,:) >= -0.5);
+% opti.subject_to(X(6,:) <= 0.5);
+% opti.subject_to(X(6,:) >= -0.5);
 % 
 % opti.subject_to(U(1,:) == 0.0);
 % opti.subject_to(X(4,:) >= -0.1);
 
-opti.subject_to(X(2,:) <= 1.2);
-opti.subject_to(X(2,:) >= -1.2);
-opti.subject_to(X(3,:) <= 1.2);
-opti.subject_to(X(3,:) >= -1.2);
+opti.subject_to(X(2,:) <= 0.5);
+opti.subject_to(X(2,:) >= -0.5);
+opti.subject_to(X(3,:) <= 0.5);
+opti.subject_to(X(3,:) >= -0.5);
+% opti.subject_to(X(3,:) == 0.0);
 
 opti.subject_to(t(1) == 0.0);
 % opti.subject_to(en(1) == e_n0);
@@ -156,11 +159,19 @@ opti.subject_to(t(1) == 0.0);
 % opti.subject_to(ephi(1) == e_phi0);
 % opti.subject_to(ethe(1) == e_the0);
 % opti.subject_to(epsi(1) == e_psi0);
-opti.subject_to(vv(1) == v0);
+% opti.subject_to(vv(1) == v0);
 % opti.subject_to(alphav(1) == alpha0);
 % opti.subject_to(betav(1) == beta0);
+opti.subject_to(en(1) == en(end));
+opti.subject_to(eb(1) == eb(end));
+opti.subject_to(ephi(1) == ephi(end));
+opti.subject_to(ethe(1) == ethe(end));
+opti.subject_to(epsi(1) == epsi(end));
+opti.subject_to(vv(1) == vv(end));
+opti.subject_to(alphav(1) == alphav(end));
+opti.subject_to(betav(1) == betav(end));
 
-opti.set_initial(vv, 1);
+opti.set_initial(vv, 10);
 
 % opti.subject_to(en(end) == 0.0);
 % opti.subject_to(eb(end) == 0.0);
@@ -253,10 +264,10 @@ r = dcm_p_e * [0; e_n0; e_b0] + p0;
 dcm_v_e  = dcm_p_e * dcm_v_p;
 r_hist = [r];
 edges = [0, 0, 0, 0, 0;
-         1.2, -1.2, -1.2, 1.2, 1.2;
-         1.2, 1.2, -1.2, -1.2, 1.2];
+         0.5, -0.5, -0.5, 0.5, 0.5;
+         0.5, 0.5, -0.5, -0.5, 0.5];
 edges_e_list = [];
-for k=1:2:N-1
+for k=1:1:N-1
     cla;
     plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2)
     plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
@@ -284,9 +295,9 @@ for k=1:2:N-1
     ptx = [pt, pt + dcm_p_e(:,1) * 1.5];
     pty = [pt, pt + dcm_p_e(:,2) * 1.5];
     ptz = [pt, pt + dcm_p_e(:,3) * 1.5];
-    plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 3, 'Color', 'r');
-    plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 3, 'Color', 'g');
-    plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 3, 'Color', 'b');
+    % plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 3, 'Color', 'r');
+    % plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 3, 'Color', 'g');
+    % plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 3, 'Color', 'b');
 
     % edges_e = pt + dcm_p_e * edges;
     % load edges_e_list_half
@@ -309,23 +320,23 @@ for k=1:2:N-1
     pgtz = [rgt, rgt + dcm_gt_e(:,3) * 1.5];
     
     % Plot Velocity Frame
-    plot3(pgtx(1,:), pgtx(2,:), pgtx(3,:), 'LineWidth', 3, 'Color', 'r');
-    plot3(pgty(1,:), pgty(2,:), pgty(3,:), 'LineWidth', 3, 'Color', 'g');
-    plot3(pgtz(1,:), pgtz(2,:), pgtz(3,:), 'LineWidth', 3, 'Color', 'b');
+    plot3(pgtx(1,:), pgtx(2,:), pgtx(3,:), 'LineWidth', 3, 'Color', 'm');
+    % plot3(pgty(1,:), pgty(2,:), pgty(3,:), 'LineWidth', 3, 'Color', 'g');
+    % plot3(pgtz(1,:), pgtz(2,:), pgtz(3,:), 'LineWidth', 3, 'Color', 'b');
 
     % Plot Thrust Vector
     dcm_b_v = CB2W(alpha_arr(k), beta_arr(k));
     dcm_b_e = dcm_gt_e * dcm_b_v;
     pvx = [rgt, rgt + dcm_b_e(:,1) * 1];
     pvy = [rgt, rgt + dcm_b_e(:,2) * 1];
-    pvz = [rgt, rgt + dcm_b_e(:,3) * T_com_arr(k)];
-    plot3(pvx(1,:), pvx(2,:), pvx(3,:), 'LineWidth', 3, 'Color', 'm');
-    plot3(pvy(1,:), pvy(2,:), pvy(3,:), 'LineWidth', 3, 'Color', 'm');
-    plot3(pvz(1,:), pvz(2,:), pvz(3,:), 'LineWidth', 3, 'Color', 'm');
+    pvz = [rgt, rgt + dcm_b_e(:,3) * 1];
+    plot3(pvx(1,:), pvx(2,:), pvx(3,:), 'LineWidth', 3, 'Color', 'r');
+    plot3(pvy(1,:), pvy(2,:), pvy(3,:), 'LineWidth', 3, 'Color', 'g');
+    plot3(pvz(1,:), pvz(2,:), pvz(3,:), 'LineWidth', 3, 'Color', 'b');
 
     drawnow;
     daspect([1,1,1])
-    pause(0.05)
+    % pause(0.5)
 end
 
 % plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
