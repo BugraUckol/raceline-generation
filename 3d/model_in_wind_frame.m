@@ -4,14 +4,16 @@ clc, clear, close all
 %   given constraints from the past
 
 %% Casadi Imports
-% addpath("/Users/bugrauckol/Documents/share/casadi-3")
-addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
 % path = load('circle_2d.mat');
 path = load('trefoil.mat');
+% path = load('half_circle_2d.mat');
+
 
 %% System Model
 %{
@@ -49,7 +51,7 @@ e_b0 = 0.0;
 e_phi0 = 0.0;
 e_psi0 = 0.0;
 e_the0 = 0.0;
-v0 = 1.0;
+v0 = 10.0;
 alpha0 = 0.0;
 beta0 = 0.0;
 
@@ -162,14 +164,14 @@ opti.subject_to(t(1) == 0.0);
 % opti.subject_to(vv(1) == v0);
 % opti.subject_to(alphav(1) == alpha0);
 % opti.subject_to(betav(1) == beta0);
-opti.subject_to(en(1) == en(end));
-opti.subject_to(eb(1) == eb(end));
-opti.subject_to(ephi(1) == ephi(end));
-opti.subject_to(ethe(1) == ethe(end));
-opti.subject_to(epsi(1) == epsi(end));
-opti.subject_to(vv(1) == vv(end));
-opti.subject_to(alphav(1) == alphav(end));
-opti.subject_to(betav(1) == betav(end));
+% opti.subject_to(en(1) == en(end));
+% opti.subject_to(eb(1) == eb(end));
+% opti.subject_to(ephi(1) == ephi(end));
+% opti.subject_to(ethe(1) == ethe(end));
+% opti.subject_to(epsi(1) == epsi(end));
+% opti.subject_to(vv(1) == vv(end));
+% opti.subject_to(alphav(1) == alphav(end));
+% opti.subject_to(betav(1) == betav(end));
 
 opti.set_initial(vv, 10);
 
@@ -209,6 +211,17 @@ y_arr = zeros(1,length(distance_arr));
 z_arr = zeros(1,length(distance_arr));
 
 k = 0;
+
+edges = [0, 0, 0, 0, 0;
+         0.5, -0.5, -0.5, 0.5, 0.5;
+         0.5, 0.5, -0.5, -0.5, 0.5];
+edges_e_list = [];
+p0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
+dcm_v_p = CB2E([e_phi0, e_the0, e_psi0]);
+dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
+dcm_b_v = CB2W(alpha_arr(1), beta_arr(1));
+r = dcm_p_e * [0; e_n0; e_b0] + p0;
+% dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
 for point = distance_arr
     k = k + 1;
 
@@ -221,35 +234,56 @@ for point = distance_arr
     x_arr(k) = rbe_e(1,1);
     y_arr(k) = rbe_e(2,1);
     z_arr(k) = rbe_e(3,1);
+
+    dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+    pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
+    ptx = [pt, pt + dcm_p_e(:,1) * 1.5];
+    pty = [pt, pt + dcm_p_e(:,2) * 1.5];
+    ptz = [pt, pt + dcm_p_e(:,3) * 1.5];
+    % plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 3, 'Color', 'r');
+    % plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 3, 'Color', 'g');
+    % plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 3, 'Color', 'b');
+
+    edges_e = pt + dcm_p_e * edges;
+    edges_e_list = cat(3, edges_e_list, edges_e);
 end
 
 %% Plots
 set(0,'DefaultFigureWindowStyle','docked')
 figure(1)
-subplot(2,3,1)
+subplot(3,2,1)
 plot(distance_arr, time_arr);
 title('dist vs time')
-subplot(2,3,2)
-plot(distance_arr, en_arr)
-title('dist vs en')
-subplot(2,3,3)
+subplot(3,2,2)
+plot(distance_arr, en_arr), hold on
 plot(distance_arr, eb_arr)
-title('dist vs eb')
-subplot(2,3,[4,5])
+title('dist vs deviations')
+legend('en', 'eb')
+subplot(3,2,3)
 plot(distance_arr, ephi_arr), hold on
 plot(distance_arr, ethe_arr)
 plot(distance_arr, epsi_arr)
 title('dist vs angles'), legend('phi', 'the', 'psi')
-subplot(2,3,6)
+subplot(3,2,4)
+plot(distance_arr, v_arr)
+title('dist vs v')
+subplot(3,2,5)
+plot(distance_arr, alpha_arr)
+title('dist vs alpha')
+subplot(3,2,6)
+plot(distance_arr, beta_arr)
+title('dist vs beta')
+
+figure(2)
+subplot(2,1,1)
+plot(distance_arr(1:end-1), T_com_arr);
+title('distance vs thrust')
+subplot(2,1,2)
 plot(distance_arr(1:end-1), p_com_arr); hold on;
 plot(distance_arr(1:end-1), q_com_arr);
 plot(distance_arr(1:end-1), r_com_arr);
-plot(distance_arr(1:end-1), T_com_arr);
-title('commands')
-
-figure(2)
-plot(distance_arr, ephi_arr)
-
+title('distance vs commands')
+legend('p','q','r')
 %%
 figure(3)
 plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2); hold on
@@ -263,10 +297,6 @@ r = dcm_p_e * [0; e_n0; e_b0] + p0;
 % dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
 dcm_v_e  = dcm_p_e * dcm_v_p;
 r_hist = [r];
-edges = [0, 0, 0, 0, 0;
-         0.5, -0.5, -0.5, 0.5, 0.5;
-         0.5, 0.5, -0.5, -0.5, 0.5];
-edges_e_list = [];
 for k=1:1:N-1
     cla;
     plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2)
@@ -289,27 +319,14 @@ for k=1:1:N-1
     r_hist = [r_hist, r];
 
     w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)];
-    dcm_v_e = dcm_v_e + dt * dcm_v_e * skew(w_be);
-    dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
-    pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
-    ptx = [pt, pt + dcm_p_e(:,1) * 1.5];
-    pty = [pt, pt + dcm_p_e(:,2) * 1.5];
-    ptz = [pt, pt + dcm_p_e(:,3) * 1.5];
-    % plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 3, 'Color', 'r');
-    % plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 3, 'Color', 'g');
-    % plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 3, 'Color', 'b');
 
-    % edges_e = pt + dcm_p_e * edges;
-    % load edges_e_list_half
-    % for ie = 1:5:500
-    %     edges_ei = edges_e_list(:,:,ie);
-    %     plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15)
-    % end
-    % plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
-    % plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
-    % plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
-    % plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
-    % plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
+    edges_ei = edges_e_list(:,:,k);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+    plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
     
     % Ground truth of velocity frame
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
@@ -336,7 +353,11 @@ for k=1:1:N-1
 
     drawnow;
     daspect([1,1,1])
-    % pause(0.5)
+    pause(0.05)
+
+    if mod(k,10) == 0
+        k;
+    end
 end
 
 % plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)

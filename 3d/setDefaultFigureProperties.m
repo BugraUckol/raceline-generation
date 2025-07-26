@@ -1,0 +1,11 @@
+function setDefaultFigureProperties()
+set(groot,'defaultLineLineWidth',2.5) 
+set(0,'DefaultaxesLineWidth', 1.5) 
+set(0,'DefaultaxesFontSize', 14) 
+set(0,'DefaultaxesFontWeight', 'bold') 
+set(0,'DefaultTextFontSize', 14) 
+set(0,'DefaultaxesFontName', 'Times new Roman') 
+set(0,'DefaultlegendFontName', 'Times new Roman')
+set(0,'defaultAxesXMinorGrid','on') 
+set(0,'defaultAxesYMinorGrid','on')
+end
