@@ -106,9 +106,9 @@ f = @(tt,een,eeb,eephi,eethe,eepsi,v,alpha,beta,T,p,q,r,kappa,tau) [
     % dv / ds
     (T*sin(alpha)*cos(beta) / m - (cv_lin * v) / m) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     % dalpha / ds
-    ((q*cos(beta) - p*cos(alpha)*sin(beta) - r*sin(alpha)*sin(beta)) + T*cos(alpha)/m) / cos(beta) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
+    ((q*cos(beta) - p*cos(alpha)*sin(beta) - r*sin(alpha)*sin(beta)) + T*cos(alpha)/m/v) / cos(beta) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     % dbeta / ds
-    (-r*cos(alpha) + p*sin(alpha) - sin(alpha)*sin(beta)*T) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
+    (-r*cos(alpha) + p*sin(alpha) - sin(alpha)*sin(beta)*T/m/v) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     ];
 
 for k=1:N % loop over control intervals
@@ -299,6 +299,7 @@ dcm_v_e  = dcm_p_e * dcm_v_p;
 r_hist = [r];
 for k=1:1:N-1
     cla;
+    dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2)
     plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
     % plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
