@@ -1,17 +1,17 @@
 %% Prep
-clc, clear, close all
+clc, clear
 % Clear is especially important since the opti object should not be 
 %   given constraints from the past
 
 %% Casadi Imports
-addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("C:\Users\bugrauckol\Desktop\bugra\casadi")
 % addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
 import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-% path = load('circle_2d.mat');
-path = load('trefoil.mat');
+path = load('circle_2d.mat');
+% path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
 
 
@@ -38,7 +38,7 @@ U = [p, q, r] (all wrt. Earth)
 %}
 
 %% Constants
-pqr_lim = 20;
+pqr_lim = 1.5;
 T_max = 5;
 T_min = 0;
 m = 0.250;
@@ -97,14 +97,14 @@ f = @(tt,een,eeb,eephi,eethe,eepsi,v,alpha,beta,T,p,q,r,kappa,tau) [
     (1 - kappa * een) * tan(eepsi) + tau * eeb;
     % deb / ds
     -(1 - kappa * een) * tan(eethe) / cos(eepsi) - tau * een;
-    % dephi / ds
-    -(tau*v*cos(eepsi)^2*cos(eethe) - (-T * sin(alpha) * sin(beta) / m / v)*cos(eephi)*sin(eethe) - (T * cos(alpha) / m / v)*sin(eephi)*sin(eethe) - (-tan(beta) * (q*cos(beta) - p*cos(alpha)*sin(beta) - r*sin(alpha)*sin(beta) + T * cos(alpha) / m / v) + q*sin(beta) + p*cos(alpha)*cos(beta) + r*cos(beta)*sin(alpha))*cos(eethe) + een*kappa*(-tan(beta) * (q*cos(beta) - p*cos(alpha)*sin(beta) - r*sin(alpha)*sin(beta) + T * cos(alpha) / m / v) + q*sin(beta) + p*cos(alpha)*cos(beta) + r*cos(beta)*sin(alpha))*cos(eethe) + een*kappa*(-T * sin(alpha) * sin(beta) / m / v)*cos(eephi)*sin(eethe) + een*kappa*(T * cos(alpha) / m / v)*sin(eephi)*sin(eethe))/(v*cos(eepsi)*cos(eethe)^2);
-    % dethe / ds
-    ((T * cos(alpha) / m / v)*cos(eephi) - (-T * sin(alpha) * sin(beta) / m / v)*sin(eephi) - een*kappa*(T * cos(alpha) / m / v)*cos(eephi) + een*kappa*(-T * sin(alpha) * sin(beta) / m / v)*sin(eephi) + tau*v*cos(eepsi)*cos(eethe)*sin(eepsi))/(v*cos(eepsi)*cos(eethe));
-    % depsi / ds
-    -(kappa*v*cos(eepsi)*cos(eethe)^2 - (T * cos(alpha) / m / v)*sin(eephi) - (-T * sin(alpha) * sin(beta) / m / v)*cos(eephi) + een*kappa*(-T * sin(alpha) * sin(beta) / m / v)*cos(eephi) + een*kappa*(T * cos(alpha) / m / v)*sin(eephi) + tau*v*cos(eepsi)^2*cos(eethe)*sin(eethe))/(v*cos(eepsi)*cos(eethe)^2);
+    % dephi / ds (phi of the of the velocity frame wrt. the path frame)
+    -(T*cos(alpha)*cos(eethe)*sin(beta) - m*p*v*cos(alpha)*cos(eethe) - m*r*v*cos(eethe)*sin(alpha) + T*cos(alpha)*cos(beta)*sin(eephi)*sin(eethe) + T*cos(beta)*cos(eephi)*sin(alpha)*sin(beta)*sin(eethe) + m*tau*v^2*cos(beta)*cos(eepsi)^2*cos(eethe) - T*een*kappa*cos(alpha)*cos(eethe)*sin(beta) + een*kappa*m*p*v*cos(alpha)*cos(eethe) + een*kappa*m*r*v*cos(eethe)*sin(alpha) - T*een*kappa*cos(alpha)*cos(beta)*sin(eephi)*sin(eethe) - T*een*kappa*cos(beta)*cos(eephi)*sin(alpha)*sin(beta)*sin(eethe))/(m*v^2*cos(beta)*cos(eepsi)*cos(eethe)^2)
+    % dethe / ds (theta of the of the velocity frame wrt. the path frame)
+    (m*tau*cos(eepsi)*cos(eethe)*sin(eepsi)*v^2 - T*cos(alpha)*cos(eephi) + T*sin(alpha)*sin(beta)*sin(eephi) + T*een*kappa*cos(alpha)*cos(eephi) - T*een*kappa*sin(alpha)*sin(beta)*sin(eephi))/(m*v^2*cos(eepsi)*cos(eethe))
+    % depsi / ds (psi of the of the velocity frame wrt. the path frame)
+    -(T*cos(alpha)*sin(eephi) + T*cos(eephi)*sin(alpha)*sin(beta) - T*een*kappa*cos(alpha)*sin(eephi) + kappa*m*v^2*cos(eepsi)*cos(eethe)^2 + m*tau*v^2*cos(eepsi)^2*cos(eethe)*sin(eethe) - T*een*kappa*cos(eephi)*sin(alpha)*sin(beta))/(m*v^2*cos(eepsi)*cos(eethe)^2)
     % dv / ds
-    (T*sin(alpha)*cos(beta) / m - (cv_lin * v) / m) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
+    (T*sin(alpha)*cos(beta) / m) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     % dalpha / ds
     ((q*cos(beta) - p*cos(alpha)*sin(beta) - r*sin(alpha)*sin(beta)) + T*cos(alpha)/m/v) / cos(beta) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     % dbeta / ds
@@ -173,7 +173,22 @@ opti.subject_to(t(1) == 0.0);
 % opti.subject_to(alphav(1) == alphav(end));
 % opti.subject_to(betav(1) == betav(end));
 
-opti.set_initial(vv, 10);
+% prevsol = load('prevsol');
+% % opti.set_initial(t, prevsol.time_arr);
+% % opti.set_initial(en, prevsol.en_arr);
+% % opti.set_initial(eb, prevsol.eb_arr);
+% % opti.set_initial(ephi, prevsol.ephi_arr);
+% % opti.set_initial(ethe, prevsol.ethe_arr);
+% % opti.set_initial(epsi, prevsol.epsi_arr);
+% % opti.set_initial(vv, prevsol.v_arr);
+% % opti.set_initial(alphav, prevsol.alpha_arr);
+% % opti.set_initial(betav, prevsol.beta_arr);
+% % 
+% % opti.set_initial(T_com, prevsol.T_com_arr);
+% % opti.set_initial(p_com, prevsol.p_com_arr);
+% % opti.set_initial(q_com, prevsol.q_com_arr);
+% % opti.set_initial(r_com, prevsol.r_com_arr);
+opti.set_initial(vv, 2);
 
 % opti.subject_to(en(end) == 0.0);
 % opti.subject_to(eb(end) == 0.0);
@@ -204,6 +219,8 @@ T_com_arr = sol.value(T_com);
 p_com_arr = sol.value(p_com);
 q_com_arr = sol.value(q_com);
 r_com_arr = sol.value(r_com);
+
+% save prevsol time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr v_arr alpha_arr beta_arr T_com_arr p_com_arr q_com_arr r_com_arr
 
 %% 3D Recreation
 x_arr = zeros(1,length(distance_arr));
@@ -254,6 +271,7 @@ figure(1)
 subplot(3,2,1)
 plot(distance_arr, time_arr);
 title('dist vs time')
+hold on
 subplot(3,2,2)
 plot(distance_arr, en_arr), hold on
 plot(distance_arr, eb_arr)
@@ -266,17 +284,20 @@ plot(distance_arr, epsi_arr)
 title('dist vs angles'), legend('phi', 'the', 'psi')
 subplot(3,2,4)
 plot(distance_arr, v_arr)
+hold on
 title('dist vs v')
 subplot(3,2,5)
 plot(distance_arr, alpha_arr)
+hold on
 title('dist vs alpha')
 subplot(3,2,6)
 plot(distance_arr, beta_arr)
+hold on
 title('dist vs beta')
 
 figure(2)
 subplot(2,1,1)
-plot(distance_arr(1:end-1), T_com_arr);
+plot(distance_arr(1:end-1), T_com_arr); hold on;
 title('distance vs thrust')
 subplot(2,1,2)
 plot(distance_arr(1:end-1), p_com_arr); hold on;
