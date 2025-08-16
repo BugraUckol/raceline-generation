@@ -6,6 +6,7 @@ clc, clear
 %% Casadi Imports
 % addpath("C:\Users\bugrauckol\Desktop\bugra\casadi")
 % addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
 import casadi.*
 
 %% Import path properties
@@ -253,6 +254,7 @@ for point = distance_arr
     z_arr(k) = rbe_e(3,1);
 
     dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+    dcm_b_e = CB2E([ephi_arr(k), ephi_arr(k), ephi_arr(k)]);
     pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     ptx = [pt, pt + dcm_p_e(:,1) * 1.5];
     pty = [pt, pt + dcm_p_e(:,2) * 1.5];

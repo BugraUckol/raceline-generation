@@ -1,0 +1,447 @@
+#VRML V2.0 utf8
+# Copyright 2017-2018 The MathWorks, Inc.
+
+DEF QuadBody Transform {
+  translation 0 0 0          # keep original position
+  scale 0.1 0.1 0.1          # shrink drone to 10% of original size
+  children [
+    DEF Quad Transform {
+      children [
+        DEF ArmI Transform {
+          rotation 0 1 0 0.785
+          children Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0 0.2 0.8
+              }
+            }
+            geometry DEF Arm1 Box {
+              size 20 1 1
+            }
+          }
+        }
+        DEF Arm2 Transform {
+          rotation 0 1 0 -0.785
+          children Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0 0.2 0.8
+              }
+            }
+            geometry Box {
+              size 20 1 1
+            }
+          }
+        }
+        DEF Motor1 Transform {
+          translation 7.0711 0 7.0711
+          children Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0 0.8 0
+              }
+            }
+            geometry Cylinder {
+              height 4
+            }
+          }
+        }
+        DEF Motor2 Transform {
+          translation -7.0711 0 7.0711
+          children Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0 0.8 0
+              }
+            }
+            geometry Cylinder {
+              height 4
+            }
+          }
+        }
+        DEF Motor3 Transform {
+          translation -7.0711 0 -7.0711
+          children Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0 0.8 0
+              }
+            }
+            geometry Cylinder {
+              height 4
+            }
+          }
+        }
+        DEF Motor4 Transform {
+          translation 7.0711 0 -7.0711
+          children Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 0 0.8 0
+              }
+            }
+            geometry Cylinder {
+              height 4
+            }
+          }
+        }
+        DEF Rotor1 Transform {
+          translation 7.0711 2 7.0711
+          children Shape {
+            appearance Appearance {
+              material Material {
+                transparency 0.4
+                diffuseColor 0.6 0.8 1
+              }
+            }
+            geometry Cylinder {
+              radius 5
+              height 0.5
+            }
+          }
+        }
+        DEF Rotor3 Transform {
+          translation -7.0711 2 7.0711
+          children Shape {
+            appearance Appearance {
+              material Material {
+                transparency 0.4
+                diffuseColor 0.6 0.8 1
+              }
+            }
+            geometry Cylinder {
+              radius 5
+              height 0.5
+            }
+          }
+        }
+        DEF Rotor4 Transform {
+          translation -7.0711 2 -7.0711
+          children Shape {
+            appearance Appearance {
+              material Material {
+                transparency 0.4
+                diffuseColor 0.6 0 0.2
+              }
+            }
+            geometry Cylinder {
+              radius 5
+              height 0.5
+            }
+          }
+        }
+        DEF Rotor2 Transform {
+          translation 7.0711 2 -7.0711
+          children Shape {
+            appearance Appearance {
+              material Material {
+                transparency 0.4
+                diffuseColor 0.6 0 0.2
+              }
+            }
+            geometry Cylinder {
+              radius 5
+              height 0.5
+            }
+          }
+        }
+        DEF CGBall Transform {
+          children Shape {
+            appearance Appearance {
+              material Material {
+                diffuseColor 1 0 0.4
+              }
+            }
+            geometry DEF CG Sphere {
+              radius 1.5
+            }
+          }
+        }
+        DEF XAxis Transform {
+          translation 14 0 0
+          rotation 0 0 1 1.57
+          children [
+            Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 1 0 0
+                }
+              }
+              geometry Cylinder {
+                radius 0.4
+                height 5
+              }
+            }
+            Transform {
+              translation 0 -3 0
+              rotation 0 0 1 3.14
+              children Shape {
+                appearance Appearance {
+                  material Material {
+                    diffuseColor 1 0 0
+                  }
+                }
+                geometry Cone {
+                }
+              }
+            }
+            Transform {
+              translation 0 -5 0
+              scale 1.5 1.5 1.5
+              rotation 0 0 1 1.57
+              children Shape {
+                appearance Appearance {
+                  material Material {
+                    diffuseColor 1 0 1
+                  }
+                }
+                geometry Text {
+                  length 10
+                  string "X" 
+                }
+              }
+            }
+          ]
+        }
+        DEF YAxis Transform {
+          translation 0 0 14
+          rotation 1 0 0 -1.57
+          children [
+            Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 0 1 0
+                }
+              }
+              geometry Cylinder {
+                radius 0.4
+                height 5
+              }
+            }
+            Transform {
+              translation 0 -3 0
+              rotation 0 0 1 3.14
+              children Shape {
+                appearance Appearance {
+                  material Material {
+                    diffuseColor 0 1 0
+                  }
+                }
+                geometry Cone {
+                }
+              }
+            }
+            Transform {
+              rotation 0 1 0 1.57
+              children Transform {
+                translation 0 -5 0
+                scale 1.5 1.5 1.5
+                rotation 0 0 1 1.57
+                children Shape {
+                  appearance Appearance {
+                    material Material {
+                      diffuseColor 1 0 1
+                    }
+                  }
+                  geometry Text {
+                    length 10
+                    string "Y" 
+                  }
+                }
+              }
+            }
+          ]
+        }
+        DEF ZAxis Transform {
+          translation 0 -4.5 0
+          children [
+            Shape {
+              appearance Appearance {
+                material Material {
+                  diffuseColor 1 0 1
+                }
+              }
+              geometry Cylinder {
+                radius 0.4
+                height 5
+              }
+            }
+            Transform {
+              translation 0 -3 0
+              rotation 0 0 1 3.14
+              children Shape {
+                appearance Appearance {
+                  material Material {
+                    diffuseColor 0 0 1
+                  }
+                }
+                geometry Cone {
+                }
+              }
+            }
+            Transform {
+              translation 0 -5 0
+              scale 1.5 1.5 1.5
+              children Shape {
+                appearance Appearance {
+                  material Material {
+                    diffuseColor 0 0 1
+                  }
+                }
+                geometry Text {
+                  length 10
+                  string "Z" 
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+    DEF QuadcopterIsometric Viewpoint {
+      description "Quadcopter Isometric"
+      position 60.0197 33.4079 78.2844
+      orientation -0.229916 0.965852 0.119451 0.670551
+    }
+  ]
+}
+DEF Light DirectionalLight {
+  direction 0 -1 0
+}
+
+DEF Background Background {
+  skyColor [0.3 0.5 0.9]      # Blue sky
+  groundColor [0 1 0] # Green ground tint
+}
+
+# --- Actual flat ground geometry ---
+DEF Ground Transform {
+  translation 0 -3 0   # slightly below drone
+  children Shape {
+    appearance Appearance {
+      material Material {
+        diffuseColor 0 0.3 0   # green
+      }
+    }
+    geometry Box {
+      size 500 1 500   # large flat ground plane
+    }
+  }
+}
+
+DEF Grid Transform {
+  translation 0 -2.4 0   # just above ground to avoid z-fighting
+  children Shape {
+    appearance Appearance {
+      material Material {
+        emissiveColor 0 0 0  # black lines
+      }
+    }
+    geometry IndexedLineSet {
+      coord Coordinate {
+        point [
+          # Horizontal lines (X direction, Z fixed)
+          -50 0 -50, 50 0 -50,
+          -50 0 -40, 50 0 -40,
+          -50 0 -30, 50 0 -30,
+          -50 0 -20, 50 0 -20,
+          -50 0 -10, 50 0 -10,
+          -50 0   0, 50 0   0,
+          -50 0  10, 50 0  10,
+          -50 0  20, 50 0  20,
+          -50 0  30, 50 0  30,
+          -50 0  40, 50 0  40,
+          -50 0  50, 50 0  50,
+
+          # Vertical lines (Z direction, X fixed)
+          -50, 0, 50, -50, 0, -50,
+          -40, 0, 50, -40, 0, -50,
+          -30, 0, 50, -30, 0, -50,
+          -20, 0, 50, -20, 0, -50,
+          -10, 0, 50, -10, 0, -50,
+            0, 0, 50,   0, 0, -50,
+           10, 0, 50,  10, 0, -50,
+           20, 0, 50,  20, 0, -50,
+           30, 0, 50,  30, 0, -50,
+           40, 0, 50,  40, 0, -50,
+           50, 0, 50,  50, 0, -50,
+        ]
+      }
+      coordIndex [
+        # Horizontal lines
+        0 1 -1,
+        2 3 -1,
+        4 5 -1,
+        6 7 -1,
+        8 9 -1,
+        10 11 -1,
+        12 13 -1,
+        14 15 -1,
+        16 17 -1,
+        18 19 -1,
+        20 21 -1,
+
+        # Vertical lines
+        22 23 -1,
+        24 25 -1,
+        26 27 -1,
+        28 29 -1,
+        30 31 -1,
+        32 33 -1,
+        34 35 -1,
+        36 37 -1,
+        38 39 -1,
+        40 41 -1,
+        42 43 -1
+      ]
+    }
+  }
+}
+
+Viewpoint {
+  position 0 15 10           # 100 units above origin
+  orientation 1 0 0 -0.875   # rotate -90° around X to look straight down
+  description "Top-down view"
+}
+
+Transform {
+  translation 0 0 0   # ground origin
+  children [
+
+    # X-axis (red, forward)
+    Transform {
+      rotation 0 0 1 -1.57   # points along +X
+      translation 2.5 0 0     # move base to origin
+      children Shape {
+        appearance Appearance {
+          material Material { diffuseColor 1 0 0 }
+        }
+        geometry Cylinder { radius 0.1 height 5 }
+      }
+    }
+
+    # Y-axis (green, lateral/right)
+    Transform {
+      rotation 1 0 0 1.57    # points along +Y
+      translation 0 0 -2.5     # move base to origin
+      children Shape {
+        appearance Appearance {
+          material Material { diffuseColor 0 1 0}
+        }
+        geometry Cylinder { radius 0.1 height 5 }
+      }
+    }
+
+    # Z-axis (blue, up)
+    Transform {
+      translation 0 2.5 0    # move base to origin
+      children Shape {
+        appearance Appearance {
+          material Material { diffuseColor 0 0 1 }
+        }
+        geometry Cylinder { radius 0.1 height 5 }
+      }
+    }
+
+  ]
+}
