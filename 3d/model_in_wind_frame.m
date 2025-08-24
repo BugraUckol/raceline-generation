@@ -39,7 +39,7 @@ U = [p, q, r] (all wrt. Earth)
 %}
 
 %% Constants
-pqr_lim = 1.5;
+pqr_lim = 20;
 T_max = 5;
 T_min = 0;
 m = 0.250;
@@ -156,6 +156,20 @@ opti.subject_to(X(3,:) <= 0.5);
 opti.subject_to(X(3,:) >= -0.5);
 % opti.subject_to(X(3,:) == 0.0);
 
+opti.subject_to(X(4,:) <= pi);
+opti.subject_to(X(4,:) >= -pi);
+opti.subject_to(X(5,:) <= pi);
+opti.subject_to(X(5,:) >= -pi);
+opti.subject_to(X(6,:) <= pi);
+opti.subject_to(X(6,:) >= -pi);
+
+opti.subject_to(X(8,:) <= pi);
+opti.subject_to(X(8,:) >= -pi);
+opti.subject_to(X(9,:) <= pi);
+opti.subject_to(X(9,:) >= -pi);
+
+% opti.subject_to(X(7,:) >= 7.8);
+
 opti.subject_to(t(1) == 0.0);
 % opti.subject_to(en(1) == e_n0);
 % opti.subject_to(eb(1) == e_b0);
@@ -165,31 +179,31 @@ opti.subject_to(t(1) == 0.0);
 % opti.subject_to(vv(1) == v0);
 % opti.subject_to(alphav(1) == alpha0);
 % opti.subject_to(betav(1) == beta0);
-% opti.subject_to(en(1) == en(end));
-% opti.subject_to(eb(1) == eb(end));
-% opti.subject_to(ephi(1) == ephi(end));
-% opti.subject_to(ethe(1) == ethe(end));
-% opti.subject_to(epsi(1) == epsi(end));
-% opti.subject_to(vv(1) == vv(end));
-% opti.subject_to(alphav(1) == alphav(end));
-% opti.subject_to(betav(1) == betav(end));
+opti.subject_to(en(1) == en(end));
+opti.subject_to(eb(1) == eb(end));
+opti.subject_to(ephi(1) == ephi(end));
+opti.subject_to(ethe(1) == ethe(end));
+opti.subject_to(epsi(1) == epsi(end));
+opti.subject_to(vv(1) == vv(end));
+opti.subject_to(alphav(1) == alphav(end));
+opti.subject_to(betav(1) == betav(end));
 
-% prevsol = load('prevsol');
-% % opti.set_initial(t, prevsol.time_arr);
-% % opti.set_initial(en, prevsol.en_arr);
-% % opti.set_initial(eb, prevsol.eb_arr);
-% % opti.set_initial(ephi, prevsol.ephi_arr);
-% % opti.set_initial(ethe, prevsol.ethe_arr);
-% % opti.set_initial(epsi, prevsol.epsi_arr);
-% % opti.set_initial(vv, prevsol.v_arr);
-% % opti.set_initial(alphav, prevsol.alpha_arr);
-% % opti.set_initial(betav, prevsol.beta_arr);
-% % 
-% % opti.set_initial(T_com, prevsol.T_com_arr);
-% % opti.set_initial(p_com, prevsol.p_com_arr);
-% % opti.set_initial(q_com, prevsol.q_com_arr);
-% % opti.set_initial(r_com, prevsol.r_com_arr);
-opti.set_initial(vv, 2);
+% prevsol = load('prevsol_circle');
+% opti.set_initial(t, prevsol.time_arr);
+% opti.set_initial(en, prevsol.en_arr);
+% opti.set_initial(eb, prevsol.eb_arr);
+% opti.set_initial(ephi, prevsol.ephi_arr);
+% opti.set_initial(ethe, prevsol.ethe_arr);
+% opti.set_initial(epsi, prevsol.epsi_arr);
+% opti.set_initial(vv, prevsol.v_arr);
+% opti.set_initial(alphav, prevsol.alpha_arr);
+% opti.set_initial(betav, prevsol.beta_arr);
+% 
+% opti.set_initial(T_com, prevsol.T_com_arr);
+% opti.set_initial(p_com, prevsol.p_com_arr);
+% opti.set_initial(q_com, prevsol.q_com_arr);
+% opti.set_initial(r_com, prevsol.r_com_arr);
+opti.set_initial(vv, 10);
 
 % opti.subject_to(en(end) == 0.0);
 % opti.subject_to(eb(end) == 0.0);
@@ -221,7 +235,7 @@ p_com_arr = sol.value(p_com);
 q_com_arr = sol.value(q_com);
 r_com_arr = sol.value(r_com);
 
-% save prevsol time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr v_arr alpha_arr beta_arr T_com_arr p_com_arr q_com_arr r_com_arr
+save prevsol_circle time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr v_arr alpha_arr beta_arr T_com_arr p_com_arr q_com_arr r_com_arr
 
 %% 3D Recreation
 x_arr = zeros(1,length(distance_arr));
@@ -268,50 +282,83 @@ for point = distance_arr
 end
 
 %% Plots
+setDefaultFigureProperties()
 set(0,'DefaultFigureWindowStyle','docked')
 figure(1)
 subplot(3,2,1)
 plot(distance_arr, time_arr);
-title('dist vs time')
+grid minor
+title('Curvilinear Distance vs Time')
+xlabel('Curvilinear Distance [m]')
 hold on
+
 subplot(3,2,2)
 plot(distance_arr, en_arr), hold on
 plot(distance_arr, eb_arr)
-title('dist vs deviations')
-legend('en', 'eb')
+title('Curvilinear Distance vs Cartesian Deviations')
+legend('e_n', 'e_b')
+xlabel('Curvilinear Distance [m]')
+ylabel('Cartesian Deviation [m]')
+grid minor
+
 subplot(3,2,3)
 plot(distance_arr, ephi_arr), hold on
 plot(distance_arr, ethe_arr)
 plot(distance_arr, epsi_arr)
-title('dist vs angles'), legend('phi', 'the', 'psi')
+title(['Curvilinear Distance vs Euler Angles of $$\mathcal{F_V}$$ wrt. $$\mathcal{F_P}$$']),...
+    legend('\gamma_{ex}', '\gamma_{ey}', '\gamma_{ez}')
+xlabel('Curvilinear Distance [m]')
+ylabel('Angle [rad]')
+grid minor
+
 subplot(3,2,4)
 plot(distance_arr, v_arr)
 hold on
-title('dist vs v')
+title('Curvilinear Distance vs Velocity')
+xlabel('Curvilinear Distance [m]')
+ylabel('Velocity [m/s]')
+grid minor
+
 subplot(3,2,5)
 plot(distance_arr, alpha_arr)
 hold on
-title('dist vs alpha')
+title('Curvilinear Distance vs Angle of Attack ($$\alpha$$)')
+xlabel('Curvilinear Distance [m]')
+ylabel('Angle [rad]')
+grid minor
+
 subplot(3,2,6)
 plot(distance_arr, beta_arr)
 hold on
-title('dist vs beta')
+title('Curvilinear Distance vs Angle of Sideslip ($$\beta$$)')
+xlabel('Curvilinear Distance [m]')
+ylabel('Angle [rad]')
+grid minor
 
+%%
 figure(2)
 subplot(2,1,1)
 plot(distance_arr(1:end-1), T_com_arr); hold on;
-title('distance vs thrust')
+title('Curvilinear Distance vs Thrust')
+xlabel('Curvilinear Distance [m]')
+ylabel('Thrust [N]')
+grid minor
 subplot(2,1,2)
 plot(distance_arr(1:end-1), p_com_arr); hold on;
 plot(distance_arr(1:end-1), q_com_arr);
 plot(distance_arr(1:end-1), r_com_arr);
-title('distance vs commands')
+grid minor
+title('Curvilinear Distance vs Angular Rates')
+xlabel('Curvilinear Distance [m]')
+ylabel('Angular Velocity [Rad/s]')
 legend('p','q','r')
 %%
 figure(3)
 plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2); hold on
-plot3(x_arr, y_arr, z_arr, 'LineWidth', 2); grid minor
+plot3(x_arr, y_arr, z_arr, 'LineWidth', 2);
 daspect([1,1,1])
+xlabel('East'), ylabel('North'), zlabel('Up'), title('Trefoil Tube and The Optimal Solution')
+grid minor; box on
 p0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_v_p = CB2E([e_phi0, e_the0, e_psi0]);
 dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
@@ -344,14 +391,26 @@ for k=1:1:N-1
 
     w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)];
 
-    edges_ei = edges_e_list(:,:,k);
+    eilist_size = size(edges_e_list);
+    for ei = 2:20:eilist_size(3)-1
+    edges_ei = edges_e_list(:,:,ei);
     plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    end
+    edges_ei = edges_e_list(:,:,1);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
+    edges_ei = edges_e_list(:,:,end-1);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'r', 'LineWidth', 4), hold on
+
     plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
     plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
     plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
     plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
-    plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
-    
+    % plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
+     
+
+    % [spx, spy, spz] = sphere(10);
+    % surf(path.x_arr(1) + 0.5*spx, path.y_arr(1) + 0.5*spy, path.z_arr(1) + 0.5*spz, 'FaceAlpha',0.5, 'FaceColor', 'r');
+
     % Ground truth of velocity frame
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_gt_e = dcm_p_e * dcm_gt_p;
