@@ -11,7 +11,7 @@ import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('circle_2d.mat');
+path = load('arc_2d.mat');
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
 
@@ -43,7 +43,7 @@ pqr_lim = 20;
 T_max = 5;
 T_min = 0;
 m = 0.250;
-cv_lin = 0.00735;
+cv_lin = 0*0.1;
 
 %% Initial conditions
 t0 = 0;
@@ -105,7 +105,7 @@ f = @(tt,een,eeb,eephi,eethe,eepsi,v,alpha,beta,T,p,q,r,kappa,tau) [
     % depsi / ds (psi of the of the velocity frame wrt. the path frame)
     -(T*cos(alpha)*sin(eephi) + T*cos(eephi)*sin(alpha)*sin(beta) - T*een*kappa*cos(alpha)*sin(eephi) + kappa*m*v^2*cos(eepsi)*cos(eethe)^2 + m*tau*v^2*cos(eepsi)^2*cos(eethe)*sin(eethe) - T*een*kappa*cos(eephi)*sin(alpha)*sin(beta))/(m*v^2*cos(eepsi)*cos(eethe)^2)
     % dv / ds
-    (T*sin(alpha)*cos(beta) / m) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
+    (T*sin(alpha)*cos(beta) / m - cv_lin * v^2 / m) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     % dalpha / ds
     ((q*cos(beta) - p*cos(alpha)*sin(beta) - r*sin(alpha)*sin(beta)) + T*cos(alpha)/m/v) / cos(beta) * ((1 - kappa * een) / (v * cos(eepsi) * cos(eethe)));
     % dbeta / ds
@@ -163,6 +163,9 @@ opti.subject_to(X(5,:) >= -pi);
 opti.subject_to(X(6,:) <= pi);
 opti.subject_to(X(6,:) >= -pi);
 
+opti.subject_to(X(7,:) <= 7);
+opti.subject_to(X(7,:) >= eps);
+
 opti.subject_to(X(8,:) <= pi);
 opti.subject_to(X(8,:) >= -pi);
 opti.subject_to(X(9,:) <= pi);
@@ -171,8 +174,8 @@ opti.subject_to(X(9,:) >= -pi);
 % opti.subject_to(X(7,:) >= 7.8);
 
 opti.subject_to(t(1) == 0.0);
-% opti.subject_to(en(1) == e_n0);
-% opti.subject_to(eb(1) == e_b0);
+opti.subject_to(en(1) == e_n0);
+opti.subject_to(eb(1) == e_b0);
 % opti.subject_to(ephi(1) == e_phi0);
 % opti.subject_to(ethe(1) == e_the0);
 % opti.subject_to(epsi(1) == e_psi0);
@@ -181,12 +184,12 @@ opti.subject_to(t(1) == 0.0);
 % opti.subject_to(betav(1) == beta0);
 opti.subject_to(en(1) == en(end));
 opti.subject_to(eb(1) == eb(end));
-opti.subject_to(ephi(1) == ephi(end));
-opti.subject_to(ethe(1) == ethe(end));
-opti.subject_to(epsi(1) == epsi(end));
-opti.subject_to(vv(1) == vv(end));
-opti.subject_to(alphav(1) == alphav(end));
-opti.subject_to(betav(1) == betav(end));
+% opti.subject_to(ephi(1) == ephi(end));
+% opti.subject_to(ethe(1) == ethe(end));
+% opti.subject_to(epsi(1) == epsi(end));
+% opti.subject_to(vv(1) == vv(end));
+% opti.subject_to(alphav(1) == alphav(end));
+% opti.subject_to(betav(1) == betav(end));
 
 % prevsol = load('prevsol_circle');
 % opti.set_initial(t, prevsol.time_arr);
@@ -204,6 +207,7 @@ opti.subject_to(betav(1) == betav(end));
 % opti.set_initial(q_com, prevsol.q_com_arr);
 % opti.set_initial(r_com, prevsol.r_com_arr);
 opti.set_initial(vv, 10);
+% opti.set_initial(alphav, pi/2);
 
 % opti.subject_to(en(end) == 0.0);
 % opti.subject_to(eb(end) == 0.0);
@@ -357,7 +361,7 @@ figure(3)
 plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2); hold on
 plot3(x_arr, y_arr, z_arr, 'LineWidth', 2);
 daspect([1,1,1])
-xlabel('East'), ylabel('North'), zlabel('Up'), title('Trefoil Tube and The Optimal Solution')
+xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube and The Optimal Solution')
 grid minor; box on
 p0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_v_p = CB2E([e_phi0, e_the0, e_psi0]);
@@ -391,26 +395,6 @@ for k=1:1:N-1
 
     w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)];
 
-    eilist_size = size(edges_e_list);
-    for ei = 2:20:eilist_size(3)-1
-    edges_ei = edges_e_list(:,:,ei);
-    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
-    end
-    edges_ei = edges_e_list(:,:,1);
-    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
-    edges_ei = edges_e_list(:,:,end-1);
-    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'r', 'LineWidth', 4), hold on
-
-    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
-    % plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
-     
-
-    % [spx, spy, spz] = sphere(10);
-    % surf(path.x_arr(1) + 0.5*spx, path.y_arr(1) + 0.5*spy, path.z_arr(1) + 0.5*spz, 'FaceAlpha',0.5, 'FaceColor', 'r');
-
     % Ground truth of velocity frame
     dcm_gt_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_gt_e = dcm_p_e * dcm_gt_p;
@@ -434,6 +418,29 @@ for k=1:1:N-1
     plot3(pvy(1,:), pvy(2,:), pvy(3,:), 'LineWidth', 3, 'Color', 'g');
     plot3(pvz(1,:), pvz(2,:), pvz(3,:), 'LineWidth', 3, 'Color', 'b');
 
+    eilist_size = size(edges_e_list);
+    for ei = 2:10:eilist_size(3)-1
+    edges_ei = edges_e_list(:,:,ei);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    end
+    edges_ei = edges_e_list(:,:,1);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
+    edges_ei = edges_e_list(:,:,end-1);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'r', 'LineWidth', 4), hold on
+
+    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+    % plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
+     
+
+    % [spx, spy, spz] = sphere(10);
+    % surf(path.x_arr(1) + 0.5*spx, path.y_arr(1) + 0.5*spy, path.z_arr(1) + 0.5*spz, 'FaceAlpha',0.5, 'FaceColor', 'r');
+
+    legend({'Centerline', 'Optimal Trajectory', '$$\vec V$$', ...
+        '$$\hat{x_{\mathcal{B}}}$$', '$$\hat{y_{\mathcal{B}}}$$', ...
+        '$$\hat{z_{\mathcal{B}}}$$'}, 'interpreter', 'latex')
     drawnow;
     daspect([1,1,1])
     pause(0.05)
