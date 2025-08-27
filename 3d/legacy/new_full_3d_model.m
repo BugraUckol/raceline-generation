@@ -453,6 +453,7 @@ P_res_all = [P_res_all, P_res];
 end
 plot3(P_res_all(1,:), P_res_all(2,:), P_res_all(3,:),'LineWidth',2,'Color', 'green')
 
+dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 pp = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 p = dcm_p_e * [0; en_arr(1); eb_arr(1)] + pp;
 

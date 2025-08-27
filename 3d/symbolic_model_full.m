@@ -49,6 +49,10 @@ My = sym("My","real");
 Mz = sym("Mz","real");
 Fz = sym("Fz","real");
 
+gx_p = sym("gx_p","real");
+gy_p = sym("gy_p","real");
+gz_p = sym("gz_p","real");
+
 %% Definitions
 % Transformations
 E = [e_phi, e_the, e_psi];
@@ -72,9 +76,10 @@ M_b = [Mx; My; Mz];
 I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
 V_dot = [u_dot; v_dot; w_dot];
 W_dot = [p_dot; q_dot; r_dot];
+g_p = [gx_p; gy_p; gz_p];
 
 %% Newton-Euler Equations
-eq_newton = V_dot == F_b/m - cross(w_be_b, De_R_be_b);
+eq_newton = V_dot == F_b/m + Cp2b * g_p - cross(w_be_b, De_R_be_b);
 eq_euler = W_dot == I_b^-1 * (M_b - cross(w_be_b, I_b * w_be_b));
 
 %% Kinematical Loop Closure
