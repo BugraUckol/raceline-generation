@@ -6,9 +6,9 @@ set(0,'DefaultaxesFontWeight', 'normal')
 set(0,'DefaultTextFontSize', 20) 
 set(0,'DefaultaxesFontName', 'Times new Roman') 
 set(0,'DefaultlegendFontName', 'Times new Roman')
-set(0,'defaultAxesXMinorGrid','off') 
-set(0,'defaultAxesYMinorGrid','off')
-set(0,'defaultAxesZMinorGrid','off')
-set(0,'defaultAxesBox','on')
+set(groot,'defaultAxesXMinorGrid','on','defaultAxesXMinorGridMode','manual');
+set(groot,'defaultAxesYMinorGrid','on','defaultAxesYMinorGridMode','manual');
+set(groot,'defaultAxesZMinorGrid','on','defaultAxesZMinorGridMode','manual');
+set(0,'defaultAxesBox','on','defaultAxesBoxMode','manual')
 set(0,'DefaultTextInterpreter', 'latex')
 end

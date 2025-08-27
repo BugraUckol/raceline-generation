@@ -4,8 +4,8 @@ setDefaultFigureProperties()
 
 %% Curve Generation
 % Parameter
-t = linspace(0, 2*pi, 200);  % parametric variable
-samples = 200;
+samples = 1000;
+t = linspace(0, 2*pi, samples);  % parametric variable
 
 % Parameters to control shape
 a = 3;      % major amplitude (horizontal)

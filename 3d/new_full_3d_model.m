@@ -11,7 +11,7 @@ import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('circle_2d.mat');
+path = load('trefoil.mat');
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
 
@@ -33,7 +33,7 @@ T_max = 5;
 T_min = 0;
 
 m = 0.250;
-I_xx = 1e-2;
+I_xx = 10e-2;
 I_yy = I_xx;
 I_zz = I_xx;
 I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
@@ -41,7 +41,7 @@ I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
 Mxy_max = (T_max/4) * (0.15 * sqrt(2) / 2) * 4;
 Mz_max = Mxy_max/ 5;
 
-V_max = 10;
+V_max = 100;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
@@ -108,7 +108,7 @@ for k=1:N % loop over control intervals
 
    % 1st Order Explicit Euler's Integration
    k1 = f(X(1,k), X(2,k), X(3,k), X(4,k), X(5,k), X(6,k),...
-       X(7,k), X(8,k), X(9,k), X(10,k), X(11,k), X(12,k), U(1,k), 0, 0, 0, ...
+       X(7,k), X(8,k), X(9,k), X(10,k), X(11,k), X(12,k), U(1,k), U(2,k), U(3,k), U(4,k), ...
        kappa, tau);
    x_next = X(:,k) + ds * k1;
    
@@ -161,25 +161,37 @@ opti.subject_to(t(1) == 0);
 % opti.subject_to(p(1) == 0);
 % opti.subject_to(q(1) == 0);
 % opti.subject_to(r(1) == 0);
+opti.subject_to(en(1) == en(end));
+opti.subject_to(eb(1) == eb(end));
+opti.subject_to(ephi(1) == ephi(end));
+opti.subject_to(ethe(1) == ethe(end));
+opti.subject_to(epsi(1) == epsi(end));
+opti.subject_to(u(1) == u(end));
+opti.subject_to(v(1) == v(end));
+opti.subject_to(w(1) == w(end));
+opti.subject_to(p(1) == p(end));
+opti.subject_to(q(1) == q(end));
+opti.subject_to(r(1) == r(end));
 
-prevsol = load('prevsol_circle_uvw');
-opti.set_initial(t, prevsol.time_arr);
-opti.set_initial(en, prevsol.en_arr);
-opti.set_initial(eb, prevsol.eb_arr);
-opti.set_initial(ephi, prevsol.ephi_arr);
-opti.set_initial(ethe, prevsol.ethe_arr);
-opti.set_initial(epsi, prevsol.epsi_arr);
-opti.set_initial(u, prevsol.u_arr);
-opti.set_initial(v, prevsol.v_arr);
-opti.set_initial(w, prevsol.w_arr);
-opti.set_initial(p, prevsol.p_arr);
-opti.set_initial(q, prevsol.q_arr);
-opti.set_initial(r, prevsol.r_arr);
+prevsol = load('prevsol_trefoil_1000');
+opti.set_initial(t(1:prevsol.N+1), prevsol.time_arr);
+opti.set_initial(en(1:prevsol.N+1), prevsol.en_arr);
+opti.set_initial(eb(1:prevsol.N+1), prevsol.eb_arr);
+opti.set_initial(ephi(1:prevsol.N+1), prevsol.ephi_arr);
+opti.set_initial(ethe(1:prevsol.N+1), prevsol.ethe_arr);
+opti.set_initial(epsi(1:prevsol.N+1), prevsol.epsi_arr);
+opti.set_initial(u(1:prevsol.N+1), prevsol.u_arr);
+opti.set_initial(v(1:prevsol.N+1), prevsol.v_arr);
+opti.set_initial(w(1:prevsol.N+1), prevsol.w_arr);
+opti.set_initial(p(1:prevsol.N+1), prevsol.p_arr);
+opti.set_initial(q(1:prevsol.N+1), prevsol.q_arr);
+opti.set_initial(r(1:prevsol.N+1), prevsol.r_arr);
+opti.set_initial(u(prevsol.N+1:end), 1);
 
-opti.set_initial(T_com, prevsol.T_com_arr);
-opti.set_initial(Mx_com, prevsol.Mx_com_arr);
-opti.set_initial(My_com, prevsol.My_com_arr);
-opti.set_initial(Mz_com, prevsol.Mz_com_arr);
+opti.set_initial(T_com(1:prevsol.N), prevsol.T_com_arr);
+opti.set_initial(Mx_com(1:prevsol.N), prevsol.Mx_com_arr);
+opti.set_initial(My_com(1:prevsol.N), prevsol.My_com_arr);
+opti.set_initial(Mz_com(1:prevsol.N), prevsol.Mz_com_arr);
 % opti.set_initial(u, 1);
 % opti.set_initial(v, 0);
 % opti.set_initial(w, 0);
@@ -217,7 +229,7 @@ Mx_com_arr = sol.value(Mx_com);
 My_com_arr = sol.value(My_com);
 Mz_com_arr = sol.value(Mz_com);
 
-% save prevsol time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr v_arr alpha_arr beta_arr T_com_arr p_com_arr q_com_arr r_com_arr
+% save prevsol_trefoil_1000_cyclic N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
 
 %% 3D Recreation
 x_arr = zeros(1,length(distance_arr));
@@ -260,51 +272,73 @@ for point = distance_arr
     edges_e_list = cat(3, edges_e_list, edges_e);
 end
 
-%% Plots
+%% State Plots
 setDefaultFigureProperties()
 set(0,'DefaultFigureWindowStyle','docked')
 figure(1)
 subplot(3,2,1)
 plot(distance_arr, time_arr);
-title('dist vs time')
+title('Curvilinear Distance vs Time')
+xlabel('Curvilinear Distance [m]')
+ylabel('Time [s]')
 hold on
+
 subplot(3,2,2)
 plot(distance_arr, en_arr), hold on
 plot(distance_arr, eb_arr)
-title('dist vs deviations')
-legend('en', 'eb')
+title('Curvilinear Distance vs Cartesian Deviations')
+legend('e_n', 'e_b')
+xlabel('Curvilinear Distance [m]')
+ylabel('Cartesian Deviation [m]')
+
 subplot(3,2,3)
 plot(distance_arr, ephi_arr), hold on
 plot(distance_arr, ethe_arr)
 plot(distance_arr, epsi_arr)
-title('dist vs angles'), legend('phi', 'the', 'psi')
+title(['Curvilinear Distance vs Euler Angles of $$\mathcal{F_B}$$ wrt. $$\mathcal{F_P}$$'])
+legend('\phi_{e}', '\theta_{e}', '\psi_{e}')
+xlabel('Curvilinear Distance [m]')
+ylabel('Angle [rad]')
+
 subplot(3,2,4)
 plot(distance_arr, u_arr), hold on
-plot(distance_arr, v_arr) 
-plot(distance_arr, w_arr) 
-title('dist vs uvw')
+plot(distance_arr, v_arr)
+plot(distance_arr, w_arr)
+legend('u','v','w')
+title('Curvilinear Distance vs UVW')
+xlabel('Curvilinear Distance [m]')
+ylabel('Velocity [m/s]')
+
 subplot(3,2,5)
 plot(distance_arr, p_arr), hold on
 plot(distance_arr, q_arr)
 plot(distance_arr, r_arr)
-title('dist vs pqr')
+legend('p','q','r')
+title('Curvilinear Distance vs PQR')
+xlabel('Curvilinear Distance [m]')
+ylabel('Anglar Velocirt [rad/s]')
 
+%% Input Plots
 figure(2)
 subplot(2,1,1)
 plot(distance_arr(1:end-1), T_com_arr); hold on;
-title('distance vs thrust')
+title('Curvilinear Distance vs Thrust')
+xlabel('Curvilinear Distance [m]')
+ylabel('Thrust [N]')
 subplot(2,1,2)
 plot(distance_arr(1:end-1), Mx_com_arr); hold on;
 plot(distance_arr(1:end-1), My_com_arr);
 plot(distance_arr(1:end-1), Mz_com_arr);
-title('distance vs commands')
-legend('p','q','r')
-%%
+title('Curvilinear Distance vs Moments')
+xlabel('Curvilinear Distance [m]')
+ylabel('Moment [Nm]')
+legend('M_x','M_y','M_z')
+
+%% 3D Plot
 figure(3)
-subplot(2,2,1)
+subplot(2,3,[1,2,4,5])
 plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2); hold on
-plot3(x_arr, y_arr, z_arr, 'LineWidth', 2); grid minor
-daspect([1,1,1])
+plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
 % dcm_b_p = CB2E([ephi_arr(1), ephi_arr(2), ephi_arr(3)]);
 % dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 % p = dcm_p_e * [0; en_arr(1); eb_arr(1)] + pp0;
@@ -312,13 +346,14 @@ daspect([1,1,1])
 % dcm_b_e  = dcm_p_e * dcm_b_p;
 p_hist = [p];
 for k=1:1:N-1
-    subplot(2,2,1)
+    subplot(2,3,[1,2,4,5])
     cla;
+    setDefaultFigureProperties();
     dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_b_e = dcm_p_e * dcm_b_p;
 
-    plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2)
+    plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2), hold on
     plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
     pp = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     p = dcm_p_e * [0; en_arr(k); eb_arr(k)] + pp;
@@ -326,27 +361,11 @@ for k=1:1:N-1
     bx = [p, p + dcm_b_e(:,1)];
     by = [p, p + dcm_b_e(:,2)];
     bz = [p, p + dcm_b_e(:,3)];
-    
+   
     plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
     plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
     plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
 
-    % dt = time_arr(k+1) - time_arr(k);
-    % ds = distance_arr(k+1) - distance_arr(k);
-
-    % p = p + dcm_v_e * [v0; 0; 0] * dt;
-
-    % p_hist = [p_hist, p];
-
-    % w_be = [p_com_arr(k), q_com_arr(k), r_com_arr(k)];
-
-    edges_ei = edges_e_list(:,:,k);
-    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
-    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
-    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
-    plot3(edges_e(1,:), edges_e(2,:), edges_e(3,:), 'k', 'LineWidth', 0.5)
     
     % Ground truth of velocity frame
     v_vec = [u_arr(k); v_arr(k); w_arr(k)];
@@ -358,39 +377,44 @@ for k=1:1:N-1
     % t_vec = [p, p + dcm_b_e(:,3) * T_com_arr(k)];
     % plot3(t_vec(1,:), t_vec(2,:), t_vec(3,:), 'LineWidth', 3, 'Color', 'cyan');
 
+    eilist_size = size(edges_e_list);
+    for ei = 2:5:eilist_size(3)-1
+    edges_ei = edges_e_list(:,:,ei);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    end
+    edges_ei = edges_e_list(:,:,1);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
+    edges_ei = edges_e_list(:,:,end-1);
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'r', 'LineWidth', 4), hold on
+
+    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+
+    legend({'Centerline', 'Optimal Trajectory', '$$\vec V$$', ...
+        '$$\hat{x_{\mathcal{B}}}$$', '$$\hat{y_{\mathcal{B}}}$$', ...
+        '$$\hat{z_{\mathcal{B}}}$$'}, 'interpreter', 'latex', 'Location','northeast')
+    xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube and The Optimal Solution')
     daspect([1,1,1])
-    subplot(2,2,2)
-    cla;
-    vb = [zeros(3,1), v_vec];
-    plot3(vb(1,:), vb(2,:), vb(3,:), 'LineWidth', 3, 'Color', 'm'); hold on
 
-    bxb = [zeros(3,1), [1;0;0]];
-    byb = [zeros(3,1), [0;1;0]];
-    bzb = [zeros(3,1), [0;0;1]];
-
-    plot3(bxb(1,:), bxb(2,:), bxb(3,:), 'LineWidth', 2, 'Color', 'r');
-    plot3(byb(1,:), byb(2,:), byb(3,:), 'LineWidth', 2, 'Color', 'g');
-    plot3(bzb(1,:), bzb(2,:), bzb(3,:), 'LineWidth', 2, 'Color', 'b');
-
-    xlim([-10,10]);
-    ylim([-10,10]);
-    zlim([-10,10]);
-    daspect([1,1,1])
-    grid on
-
-    subplot(2,2,3)
+    subplot(2,3,3)
     cla;
     plot(distance_arr(1:end-1), T_com_arr); hold on;
-    xline(distance_arr(k))
-    title('distance vs thrust')
-    subplot(2,2,4)
+    xline(distance_arr(k), 'LineWidth', 2)
+    title('Curvilinear Distance vs Thrust')
+    xlabel('Curvilinear Distance [m]')
+    ylabel('Thrust [N]')
+    subplot(2,3,6)
     cla;
     plot(distance_arr(1:end-1), Mx_com_arr); hold on;
     plot(distance_arr(1:end-1), My_com_arr);
     plot(distance_arr(1:end-1), Mz_com_arr);
-    xline(distance_arr(k))
-    title('distance vs commands')
-    legend('p','q','r')
+    xline(distance_arr(k), 'LineWidth', 2)
+    title('Curvilinear Distance vs Moments')
+    xlabel('Curvilinear Distance [m]')
+    ylabel('Moment [Nm]')
+    legend('M_x','M_y','M_z')
 
     drawnow;
     pause(0.05)
@@ -400,18 +424,21 @@ for k=1:1:N-1
     end
 end
 
-%%
+%% Open Loop Test Plot
+figure(4)
+plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2, 'LineStyle', '--'); hold on
+plot3(x_arr, y_arr, z_arr, 'LineWidth', 2);
+daspect([1,1,1])
 dcm_p_e_res = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 dcm_b_p_res = CB2E([ephi_arr(1), ethe_arr(1), epsi_arr(1)]);
 dcm_b_e_res = dcm_p_e_res * dcm_b_p_res;
 pp = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 P_res = dcm_p_e_res * [0; en_arr(1); eb_arr(1)] + pp;
+P_res_all = P_res;
 v_res = [u_arr(1); v_arr(1); w_arr(1)];
 w_res = [p_arr(1); q_arr(1); r_arr(1)];
 [a,b,c] = dcm2angle(dcm_b_e_res');
-E_res = [c,b,a];
-figure(3)
-subplot(2,2,1)
+E_res = [c;b;a];
 for k=1:1:N-1
 dt = time_arr(k+1) - time_arr(k);
 T_res = [0;0;T_com_arr(k)];
@@ -420,23 +447,22 @@ C_res = CB2E(E_res);
 
 P_res = P_res + dt * CB2E(E_res) * v_res;
 v_res = v_res + dt * (T_res/m - cross(w_res, v_res));
-w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));
 E_res = E_res + dt * W2ED(w_res, E_res);
-plot3(P_res(1), P_res(2), P_res(3), '*', 'MarkerSize', 5), hold on
+w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));
+P_res_all = [P_res_all, P_res];
 end
+plot3(P_res_all(1,:), P_res_all(2,:), P_res_all(3,:),'LineWidth',2,'Color', 'green')
 
-% plot3(r_hist(1,:), r_hist(2,:), r_hist(3,:), 'LineWidth', 3)
-% 
-% h_ref   = plot3(NaN, NaN, NaN, 'k.-', 'LineWidth', 6);
-% h_start = plot3(NaN, NaN, NaN, 'g-',  'LineWidth', 4);
-% h_end   = plot3(NaN, NaN, NaN, 'r-',  'LineWidth', 4);
-% h_bound = plot3(NaN, NaN, NaN, 'k-',  'LineWidth', 0.15);
-% 
-% legend([h_ref, h_start, h_end, h_bound], ...
-%        {'Reference Line', ...
-%         'Start', ...
-%         'End', ...
-%         'Bounds'});
-% xlabel('x[m]')
-% ylabel('y[m]')
-% zlabel('z[m]')
+pp = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
+p = dcm_p_e * [0; en_arr(1); eb_arr(1)] + pp;
+
+bx = [p, p + dcm_b_e(:,1)];
+by = [p, p + dcm_b_e(:,2)];
+bz = [p, p + dcm_b_e(:,3)];
+
+plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
+plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
+plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
+
+legend({'Centerline', 'Optimal Trajectory', 'Open Loop Results'}, 'Location','northeast')
+xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube, Optimal Solution and Open Loop Results')

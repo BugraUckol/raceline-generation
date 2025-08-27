@@ -62,12 +62,12 @@ title('3D Infinity Curve (Non-Intersecting)');
 view(135, 30); % adjust view angle for clarity
 hold on
 
-for i = 1:1:1000
+for i = 1:1:200
     cla;
     plot3(x, y, z, 'k', 'LineWidth', 2);
 
-    ts_e = i * 2*pi / 1000 + start;
-    dt = 2*pi / 1000;
+    ts_e = i * 1.8*pi / 200 + start;
+    dt = 1.8*pi / 200;
     p = double(subs(r, t_s, ts_e));
     ds = norm(p - p_prev);
 
