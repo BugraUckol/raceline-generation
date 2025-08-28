@@ -6,6 +6,7 @@ m = sym("m","real");
 I_xx = sym("I_xx","real");
 I_yy = sym("I_yy","real");
 I_zz = sym("I_zz","real");
+Cd = sym("Cd","real");
 
 t = sym("t","real");
 
@@ -71,7 +72,9 @@ De_R_be_b = [u; v; w];
 De_R_be_p = Cb2p * De_R_be_b;
 Db_w_be_b = [p_dot; q_dot; r_dot];
 E_dot = [e_phi_dot; e_the_dot; e_psi_dot];
-F_b = [0; 0; Fz];
+F_t = [0; 0; Fz];
+F_d = -Cd * De_R_be_b .* abs(De_R_be_b);
+F_b = F_t + F_d;
 M_b = [Mx; My; Mz];
 I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
 V_dot = [u_dot; v_dot; w_dot];

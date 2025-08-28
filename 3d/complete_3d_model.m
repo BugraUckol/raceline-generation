@@ -11,7 +11,7 @@ import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('circle_2d.mat');
+path = load('trefoil.mat');
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
 
@@ -32,6 +32,7 @@ U = [Fz, Mx, My, Mz]
 T_max = 5;
 T_min = 0;
 g = 9.81;
+Cd = 0.3;
 
 m = 0.250;
 I_xx = 10e-2;
@@ -88,11 +89,11 @@ f = @(tt,en,eb,e_phi,e_the,e_psi,u,v,w,p,q,r,Fz,Mx,My,Mz,kappa,tau,gx_p, gy_p, g
     % depsi / ds (psi of the of the body frame wrt. the path frame)
     -((en*kappa - 1)*((cos(e_phi)*(r + (tau*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the))*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1) + (kappa*cos(e_phi)*cos(e_the)*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1)))/cos(e_the) + (sin(e_phi)*(q - (tau*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the))*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1) + (kappa*cos(e_the)*sin(e_phi)*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1)))/cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
     % du / ds
-    -((en*kappa - 1)*(r*v - q*w - gz_p*sin(e_the) + gx_p*cos(e_psi)*cos(e_the) + gy_p*cos(e_the)*sin(e_psi)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    ((en*kappa - 1)*(q*w - r*v + gz_p*sin(e_the) - gx_p*cos(e_psi)*cos(e_the) - gy_p*cos(e_the)*sin(e_psi) + (Cd*u*abs(u))/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
     % dv / ds
-    -((en*kappa - 1)*(gy_p*(cos(e_phi)*cos(e_psi) + sin(e_phi)*sin(e_psi)*sin(e_the)) - gx_p*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + p*w - r*u + gz_p*cos(e_the)*sin(e_phi)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-    % dw / ds
-    -((en*kappa - 1)*(gx_p*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - gy_p*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the)) - p*v + q*u + Fz/m + gz_p*cos(e_phi)*cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    ((en*kappa - 1)*(gx_p*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) - gy_p*(cos(e_phi)*cos(e_psi) + sin(e_phi)*sin(e_psi)*sin(e_the)) - p*w + r*u - gz_p*cos(e_the)*sin(e_phi) + (Cd*v*abs(v))/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+     % dw / ds
+    -((en*kappa - 1)*(gx_p*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - gy_p*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the)) - p*v + q*u + (Fz - Cd*w*abs(w))/m + gz_p*cos(e_phi)*cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
     % dp / ds
     -((en*kappa - 1)*(Mx + I_yy*q*r - I_zz*q*r))/(I_xx*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
     % dq / ds
@@ -429,7 +430,7 @@ for k=1:1:N-1
 end
 
 %% Open Loop Test Plot
-figure(5)
+figure(4)
 plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2, 'LineStyle', '--'); hold on
 plot3(x_arr, y_arr, z_arr, 'LineWidth', 2);
 daspect([1,1,1])
@@ -446,11 +447,13 @@ E_res = [c;b;a];
 for k=1:1:N-1
 dt = time_arr(k+1) - time_arr(k);
 T_res = [0;0;T_com_arr(k)];
+D_res = -Cd * v_res .* abs(v_res);
+F_res = T_res + D_res;
 M_res = [Mx_com_arr(k); My_com_arr(k); Mz_com_arr(k)];
 C_res = CB2E(E_res);
 
 P_res = P_res + dt * CB2E(E_res) * v_res;
-v_res = v_res + dt * (T_res/m + C_res'*[0;0;-g] - cross(w_res, v_res));
+v_res = v_res + dt * (F_res/m + C_res'*[0;0;-g] - cross(w_res, v_res));
 E_res = E_res + dt * W2ED(w_res, E_res);
 w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));
 P_res_all = [P_res_all, P_res];
@@ -458,6 +461,8 @@ end
 plot3(P_res_all(1,:), P_res_all(2,:), P_res_all(3,:),'LineWidth',2,'Color', 'green')
 
 dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
+dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
+dcm_b_e = dcm_p_e * dcm_b_p;
 pp = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 p = dcm_p_e * [0; en_arr(1); eb_arr(1)] + pp;
 
