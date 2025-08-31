@@ -11,8 +11,8 @@ import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('trefoil.mat');
-filename = 'trefoil.gif';
+path = load('arc_2d.mat');
+filename = 'arc_2d.gif';
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
 
@@ -44,7 +44,7 @@ I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
 Mxy_max = (T_max/4) * (0.15 * sqrt(2) / 2) * 4;
 Mz_max = Mxy_max/ 5;
 
-V_max = 100;
+V_max = 15;
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
@@ -90,11 +90,11 @@ f = @(tt,en,eb,e_phi,e_the,e_psi,u,v,w,p,q,r,Fz,Mx,My,Mz,kappa,tau,gx_p, gy_p, g
     % depsi / ds (psi of the of the body frame wrt. the path frame)
     -((en*kappa - 1)*((cos(e_phi)*(r + (tau*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the))*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1) + (kappa*cos(e_phi)*cos(e_the)*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1)))/cos(e_the) + (sin(e_phi)*(q - (tau*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the))*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1) + (kappa*cos(e_the)*sin(e_phi)*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1)))/cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
     % du / ds
-    ((en*kappa - 1)*(q*w - r*v + gz_p*sin(e_the) - gx_p*cos(e_psi)*cos(e_the) - gy_p*cos(e_the)*sin(e_psi) + (Cd*u)/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    ((en*kappa - 1)*(q*w - r*v + gz_p*sin(e_the) - gx_p*cos(e_psi)*cos(e_the) - gy_p*cos(e_the)*sin(e_psi) + (-Fz + Cd*u)/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
     % dv / ds
     ((en*kappa - 1)*(gx_p*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) - gy_p*(cos(e_phi)*cos(e_psi) + sin(e_phi)*sin(e_psi)*sin(e_the)) - p*w + r*u - gz_p*cos(e_the)*sin(e_phi) + (Cd*v)/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
      % dw / ds
-    -((en*kappa - 1)*(gx_p*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - gy_p*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the)) - p*v + q*u + (Fz - Cd*w)/m + gz_p*cos(e_phi)*cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    -((en*kappa - 1)*(gx_p*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - gy_p*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the)) - p*v + q*u + (-Cd*w)/m + gz_p*cos(e_phi)*cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
     % dp / ds
     -((en*kappa - 1)*(Mx + I_yy*q*r - I_zz*q*r))/(I_xx*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
     % dq / ds
@@ -154,6 +154,14 @@ opti.subject_to(ephi >= -pi);
 opti.subject_to(ethe >= -pi);
 opti.subject_to(epsi >= -pi);
 
+% opti.subject_to(Mx_com == 0);
+% opti.subject_to(My_com == 0);
+% opti.subject_to(Mz_com == 0);
+opti.subject_to(v == 0);
+% opti.subject_to(ephi == 0);
+opti.subject_to(ethe == 0);
+opti.subject_to(u(1) == V_max);
+
 % Initial Conditions
 opti.subject_to(t(1) == 0);
 % opti.subject_to(en(1) == e_n0);
@@ -167,41 +175,44 @@ opti.subject_to(t(1) == 0);
 % opti.subject_to(p(1) == 0);
 % opti.subject_to(q(1) == 0);
 % opti.subject_to(r(1) == 0);
-% opti.subject_to(en(1) == -0.2);
-% opti.subject_to(eb(1) == 0);
+opti.subject_to(en(1) == -0.2);
+opti.subject_to(eb(1) == 0);
 opti.subject_to(en(1) == en(end));
-opti.subject_to(eb(1) == eb(end));
-opti.subject_to(ephi(1) == ephi(end));
-opti.subject_to(ethe(1) == ethe(end));
-opti.subject_to(epsi(1) == epsi(end));
-opti.subject_to(u(1) == u(end));
-opti.subject_to(v(1) == v(end));
-opti.subject_to(w(1) == w(end));
-opti.subject_to(p(1) == p(end));
-opti.subject_to(q(1) == q(end));
-opti.subject_to(r(1) == r(end));
+% opti.subject_to(ephi(1) == ephi(end));
+% opti.subject_to(ethe(1) == ethe(end));
+% opti.subject_to(epsi(1) == epsi(end));
+% opti.subject_to(u(1) == u(end));
+% opti.subject_to(v(1) == v(end));
+% opti.subject_to(w(1) == w(end));
+% opti.subject_to(p(1) == p(end));
+% opti.subject_to(q(1) == q(end));
+% opti.subject_to(r(1) == r(end));
 
-prevsol = load('prevsol_trefoil_1000');
-opti.set_initial(t(1:prevsol.N+1), prevsol.time_arr);
-opti.set_initial(en(1:prevsol.N+1), prevsol.en_arr);
-opti.set_initial(eb(1:prevsol.N+1), prevsol.eb_arr);
-opti.set_initial(ephi(1:prevsol.N+1), prevsol.ephi_arr);
-opti.set_initial(ethe(1:prevsol.N+1), prevsol.ethe_arr);
-opti.set_initial(epsi(1:prevsol.N+1), prevsol.epsi_arr);
-opti.set_initial(u(1:prevsol.N+1), prevsol.u_arr);
-opti.set_initial(v(1:prevsol.N+1), prevsol.v_arr);
-opti.set_initial(w(1:prevsol.N+1), prevsol.w_arr);
-opti.set_initial(p(1:prevsol.N+1), prevsol.p_arr);
-opti.set_initial(q(1:prevsol.N+1), prevsol.q_arr);
-opti.set_initial(r(1:prevsol.N+1), prevsol.r_arr);
-opti.set_initial(u(prevsol.N+1:end), 1);
-opti.set_initial(T_com(1:prevsol.N), prevsol.T_com_arr);
-opti.set_initial(Mx_com(1:prevsol.N), prevsol.Mx_com_arr);
-opti.set_initial(My_com(1:prevsol.N), prevsol.My_com_arr);
-opti.set_initial(Mz_com(1:prevsol.N), prevsol.Mz_com_arr);
-% opti.set_initial(u, 1);
+% prevsol = load('prevsol_trefoil_1000');
+% opti.set_initial(t(1:prevsol.N+1), prevsol.time_arr);
+% opti.set_initial(en(1:prevsol.N+1), prevsol.en_arr);
+% opti.set_initial(eb(1:prevsol.N+1), prevsol.eb_arr);
+% opti.set_initial(ephi(1:prevsol.N+1), prevsol.ephi_arr);
+% opti.set_initial(ethe(1:prevsol.N+1), prevsol.ethe_arr);
+% opti.set_initial(epsi(1:prevsol.N+1), prevsol.epsi_arr);
+% opti.set_initial(u(1:prevsol.N+1), prevsol.u_arr);
+% opti.set_initial(v(1:prevsol.N+1), prevsol.v_arr);
+% opti.set_initial(w(1:prevsol.N+1), prevsol.w_arr);
+% opti.set_initial(p(1:prevsol.N+1), prevsol.p_arr);
+% opti.set_initial(q(1:prevsol.N+1), prevsol.q_arr);
+% opti.set_initial(r(1:prevsol.N+1), prevsol.r_arr);
+% opti.set_initial(u(prevsol.N+1:end), 1);
+% 
+% opti.set_initial(T_com(1:prevsol.N), prevsol.T_com_arr);
+% opti.set_initial(Mx_com(1:prevsol.N), prevsol.Mx_com_arr);
+% opti.set_initial(My_com(1:prevsol.N), prevsol.My_com_arr);
+% opti.set_initial(Mz_com(1:prevsol.N), prevsol.Mz_com_arr);
+% opti.set_initial(u, 0);
 % opti.set_initial(v, 0);
-% opti.set_initial(w, 0);
+% opti.set_initial(w, 15);
+% opti.set_initial(ethe, pi/2);
+% opti.set_initial(epsi, 0.6349);
+opti.set_initial(u, 15);
 
 % opti.subject_to(en(end) == 0.0);
 % opti.subject_to(eb(end) == 0.0);
@@ -323,12 +334,12 @@ plot(distance_arr, r_arr)
 legend('p','q','r')
 title('Curvilinear Distance vs PQR')
 xlabel('Curvilinear Distance [m]')
-ylabel('Anglar Velocity [rad/s]')
+ylabel('Anglar Velocirt [rad/s]')
 
 
 subplot(3,2,6)
 plot(distance_arr, sqrt(u_arr.^2 + v_arr.^2 + w_arr.^2)), hold on
-title('Curvilinear Distance vs Total Velocity')
+title('Curvilinear Distance vs UVW')
 xlabel('Curvilinear Distance [m]')
 ylabel('Total Velocity [m/s]')
 
@@ -494,7 +505,7 @@ w_res = [p_arr(1); q_arr(1); r_arr(1)];
 E_res = [c;b;a];
 for k=1:1:N-1
 dt = time_arr(k+1) - time_arr(k);
-T_res = [0;0;T_com_arr(k)];
+T_res = [T_com_arr(k);0;0];
 D_res = -Cd * v_res;
 F_res = T_res + D_res;
 M_res = [Mx_com_arr(k); My_com_arr(k); Mz_com_arr(k)];
