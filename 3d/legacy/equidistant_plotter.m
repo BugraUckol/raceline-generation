@@ -58,5 +58,5 @@ for k = idx
 end
 
 % Plot curvature as color on curve (optional)
-title('Curvilinear Grid around a Sine Curve')
+title('Curvilinear Grid around $$y=x^2$$', 'interpreter', 'latex')
 xlabel('x'); ylabel('y')

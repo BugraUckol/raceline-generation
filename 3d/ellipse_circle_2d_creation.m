@@ -1,29 +1,27 @@
 %% Prep
 clc, clear, close all
-setDefaultFigureProperties()
 
 %% Curve Generation
 % Parameter
-samples = 300;
-t = linspace(0, 2*pi, samples);  % parametric variable
+t = linspace(0, 2*pi, 200);  % parametric variable
 
 % Parameters to control shape
-a = 10;      % major amplitude (horizontal)
+a = 2;      % major amplitude (horizontal)
 b = 5;    % vertical amplitude
-c = 3;    % depth amplitude (3D deviation)
+c = 0;    % depth amplitude (3D deviation)
 
 % Parametric equations for 3D figure-eight curve
-x = a * sin(t);
-y = b * sin(2*t);
-z = c * cos(t);
+x = a * cos(t);
+y = b * sin(t);
+z = c * t;
 
 % Plot
 figure(1);
 
 t_s = sym("t_s","real");
-xs = a * sin(t_s);
-ys = b * sin(2 * t_s);
-zs = c * cos(t_s);
+xs = a * cos(t_s);
+ys = b * sin(t_s);
+zs = c * t_s;
 
 r = [xs, ys, zs]';
 r_d = simplify(diff(r, t_s));
@@ -58,19 +56,18 @@ nn = double(subs(ns, t_s, start));
 bb = double(subs(bs, t_s, start));
 
 plot3(x, y, z, 'k', 'LineWidth', 2);
-axis equal;
-xlabel('East'); ylabel('North'); zlabel('Up');
-title('3D Infinity');
+grid on; axis equal;
+xlabel('x'); ylabel('y'); zlabel('z');
+title('3D Infinity Curve (Non-Intersecting)');
 view(135, 30); % adjust view angle for clarity
 hold on
-plot3(x, y, z, 'k', 'LineWidth', 2);
-box on;
-for i = 1:1:samples
-    % cla;
-    % plot3(x, y, z, 'k', 'LineWidth', 2);
 
-    ts_e = i * 2 * pi / samples + start;
-    dt = 2 * pi / samples;
+for i = 1:1:200
+    cla;
+    plot3(x, y, z, 'k', 'LineWidth', 2);
+
+    ts_e = i * 2*pi / 200 + start;
+    dt = 2*pi / 200;
     p = double(subs(r, t_s, ts_e));
     ds = norm(p - p_prev);
 
@@ -122,42 +119,30 @@ for i = 1:1:samples
     pnn = [p, p + nn];
     pbb = [p, p + bb];
 
-    if i == 1
-        pt = [p, p + 1.5 * t];
-        pn = [p, p + 1.5 * n];
-        pb = [p, p + 1.5 * b];
-        plot3(pt(1,:), pt(2,:), pt(3,:), 'LineWidth', 4, 'Color', 'r');
-        plot3(pn(1,:), pn(2,:), pn(3,:), 'LineWidth', 4, 'Color', 'g');
-        plot3(pb(1,:), pb(2,:), pb(3,:), 'LineWidth', 4, 'Color', 'b');
-        [spx, spy, spz] = sphere(10);
-        surf(p(1) + 0.5*spx, p(2) + 0.5*spy, p(3) + 0.5*spz, 'FaceAlpha',0.5, 'FaceColor', 'r');
-    elseif mod(i,3) == 0
-        plot3(pt(1,:), pt(2,:), pt(3,:), 'LineWidth', 2, 'Color', 'r');
-        plot3(pn(1,:), pn(2,:), pn(3,:), 'LineWidth', 2, 'Color', 'g');
-        plot3(pb(1,:), pb(2,:), pb(3,:), 'LineWidth', 2, 'Color', 'b');
-    end
-    % plot3(ptt(1,:), ptt(2,:), ptt(3,:), 'LineWidth', 2, 'Color', 'r', ...
-    %     'LineStyle', '-.');
-    % plot3(pnn(1,:), pnn(2,:), pnn(3,:), 'LineWidth', 2, 'Color', 'g', ...
-    %     'LineStyle', '-.');
-    % plot3(pbb(1,:), pbb(2,:), pbb(3,:), 'LineWidth', 2, 'Color', 'b', ...
-    %     'LineStyle', '-.');
+    plot3(pt(1,:), pt(2,:), pt(3,:), 'LineWidth', 2, 'Color', 'r');
+    plot3(pn(1,:), pn(2,:), pn(3,:), 'LineWidth', 2, 'Color', 'g');
+    plot3(pb(1,:), pb(2,:), pb(3,:), 'LineWidth', 2, 'Color', 'b');
+
+    plot3(ptt(1,:), ptt(2,:), ptt(3,:), 'LineWidth', 2, 'Color', 'r', ...
+        'LineStyle', '-.');
+    plot3(pnn(1,:), pnn(2,:), pnn(3,:), 'LineWidth', 2, 'Color', 'g', ...
+        'LineStyle', '-.');
+    plot3(pbb(1,:), pbb(2,:), pbb(3,:), 'LineWidth', 2, 'Color', 'b', ...
+        'LineStyle', '-.');
     pause(0.005);
     p_prev = p;
 end
 s_arr = s_arr(2:end);
 
 figure(2)
-plot(s_arr, kappa_arr, 'LineWidth', 4);
+plot(s_arr, kappa_arr, 'LineWidth', 2);
 hold all
-plot(s_arr, tau_arr, 'LineWidth', 4);
+plot(s_arr, tau_arr, 'LineWidth', 2);
 xlabel('Curvilinear Distance [m]')
 ylabel('Value [1/m]')
 legend('Curvature','Torsion')
-title('Arclength -vs- Curvature and Torsion Profile of The Trefoil')
-grid minor
 
 display(strcat('Problematic points are', 20, num2str(err_idx')))
 
-save infinity3d s_arr x_arr y_arr z_arr kappa_arr tau_arr tt_arr ...
+save ellipse_2d s_arr x_arr y_arr z_arr kappa_arr tau_arr tt_arr ...
     nn_arr bb_arr yaw_arr pitch_arr roll_arr
