@@ -1,6 +1,8 @@
+RRRR = 1;
+TTTT = 1;
 %% Prep
-clc, clear
-% Clear is especially important since the opti object should not be 
+clc, clearvars -except RRRR TTTT
+% Clear is especially important since the opti object should not be
 %   given constraints from the past
 
 %% Casadi Imports
@@ -11,8 +13,8 @@ import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('ellipse_2d.mat');
-filename = 'ellipse.gif';
+path = load('ellipse_ptf.mat');
+% filename = 'ellipse_2d.gif';
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
 
@@ -30,7 +32,7 @@ U = [Fz, Mx, My, Mz]
 %}
 
 %% Constants
-T_max = 5;
+T_max = 15;
 T_min = 0;
 g = 9.81;
 Cd = 0.3;
@@ -44,7 +46,12 @@ I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
 Mxy_max = (T_max/4) * (0.15 * sqrt(2) / 2) * 4;
 Mz_max = Mxy_max/ 5;
 
-V_max = 100;
+V_max = 30;
+
+FM2w = [0.2000    0.9425   -0.9425    4.7125;
+    0.2000    0.9425    0.9425   -4.7125;
+    0.2000   -0.9425    0.9425    4.7125;
+    0.2000   -0.9425   -0.9425   -4.7125];
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
@@ -76,50 +83,43 @@ Mz_com = U(4,:);
 opti.minimize(t(end));
 
 % System dynamics
-f = @(tt,en,eb,e_phi,e_the,e_psi,u,v,w,p,q,r,Fz,Mx,My,Mz,kappa,tau,gx_p, gy_p, gz_p) [
-    % dt / ds
-    -(en*kappa - 1)/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-    % den / ds
-    -((en*kappa - 1)*(v*(cos(e_phi)*cos(e_psi) + sin(e_phi)*sin(e_psi)*sin(e_the)) - w*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the)) + u*cos(e_the)*sin(e_psi) - (eb*tau*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-    % deb / ds
-    -((en*kappa - 1)*(w*cos(e_phi)*cos(e_the) - u*sin(e_the) + v*cos(e_the)*sin(e_phi) + (en*tau*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-    % dephi / ds (phi of the of the body frame wrt. the path frame)
-    -(tau*u*cos(e_psi)^2*cos(e_the) - r*cos(e_phi)*sin(e_the) - q*sin(e_phi)*sin(e_the) - p*cos(e_the) + en*kappa*p*cos(e_the) + tau*w*cos(e_phi)*cos(e_psi)^2*sin(e_the) + tau*v*cos(e_psi)^2*sin(e_phi)*sin(e_the) + en*kappa*r*cos(e_phi)*sin(e_the) + en*kappa*q*sin(e_phi)*sin(e_the) - tau*v*cos(e_phi)*cos(e_psi)*sin(e_psi) + tau*w*cos(e_psi)*sin(e_phi)*sin(e_psi))/(cos(e_the)*(u*cos(e_psi)*cos(e_the) - v*cos(e_phi)*sin(e_psi) + w*sin(e_phi)*sin(e_psi) + w*cos(e_phi)*cos(e_psi)*sin(e_the) + v*cos(e_psi)*sin(e_phi)*sin(e_the)))
-    % dethe / ds (theta of the of the body frame wrt. the path frame)
-    (q*cos(e_phi) - r*sin(e_phi) - tau*v*cos(e_phi) + tau*w*sin(e_phi) + tau*v*cos(e_phi)*cos(e_psi)^2 - tau*w*cos(e_psi)^2*sin(e_phi) - en*kappa*q*cos(e_phi) + en*kappa*r*sin(e_phi) + tau*u*cos(e_psi)*cos(e_the)*sin(e_psi) + tau*w*cos(e_phi)*cos(e_psi)*sin(e_psi)*sin(e_the) + tau*v*cos(e_psi)*sin(e_phi)*sin(e_psi)*sin(e_the))/(u*cos(e_psi)*cos(e_the) - v*cos(e_phi)*sin(e_psi) + w*sin(e_phi)*sin(e_psi) + w*cos(e_phi)*cos(e_psi)*sin(e_the) + v*cos(e_psi)*sin(e_phi)*sin(e_the))
-    % depsi / ds (psi of the of the body frame wrt. the path frame)
-    -((en*kappa - 1)*((cos(e_phi)*(r + (tau*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the))*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1) + (kappa*cos(e_phi)*cos(e_the)*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1)))/cos(e_the) + (sin(e_phi)*(q - (tau*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the))*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1) + (kappa*cos(e_the)*sin(e_phi)*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(en*kappa - 1)))/cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-    % du / ds
-    ((en*kappa - 1)*(q*w - r*v + gz_p*sin(e_the) - gx_p*cos(e_psi)*cos(e_the) - gy_p*cos(e_the)*sin(e_psi) + (Cd*u)/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-    % dv / ds
-    ((en*kappa - 1)*(gx_p*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) - gy_p*(cos(e_phi)*cos(e_psi) + sin(e_phi)*sin(e_psi)*sin(e_the)) - p*w + r*u - gz_p*cos(e_the)*sin(e_phi) + (Cd*v)/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-     % dw / ds
-    -((en*kappa - 1)*(gx_p*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - gy_p*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the)) - p*v + q*u + (Fz - Cd*w)/m + gz_p*cos(e_phi)*cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-    % dp / ds
-    -((en*kappa - 1)*(Mx + I_yy*q*r - I_zz*q*r))/(I_xx*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
-    % dq / ds
-    -((en*kappa - 1)*(My - I_xx*p*r + I_zz*p*r))/(I_yy*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
-    % dr / ds
-    -((en*kappa - 1)*(Mz + I_xx*p*q - I_yy*p*q))/(I_zz*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
+% System dynamics
+f = @(tt,en,eb,e_phi,e_the,e_psi,u,v,w,p,q,r,Fz,Mx,My,Mz,kappa1,kappa2,gx_p, gy_p, gz_p) [
+    (eb*kappa1 - en*kappa2 + 1)/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    ((eb*kappa1 - en*kappa2 + 1)*(v*cos(e_phi)*cos(e_psi) + u*cos(e_the)*sin(e_psi) - w*cos(e_psi)*sin(e_phi) + w*cos(e_phi)*sin(e_psi)*sin(e_the) + v*sin(e_phi)*sin(e_psi)*sin(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    ((eb*kappa1 - en*kappa2 + 1)*(w*cos(e_phi)*cos(e_the) - u*sin(e_the) + v*cos(e_the)*sin(e_phi)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    (p*cos(e_the) + kappa1*v*cos(e_phi) - kappa1*w*sin(e_phi) + r*cos(e_phi)*sin(e_the) + q*sin(e_phi)*sin(e_the) - kappa1*v*cos(e_phi)*cos(e_psi)^2 + kappa1*w*cos(e_psi)^2*sin(e_phi) + eb*kappa1*p*cos(e_the) - en*kappa2*p*cos(e_the) + eb*kappa1*r*cos(e_phi)*sin(e_the) - en*kappa2*r*cos(e_phi)*sin(e_the) + eb*kappa1*q*sin(e_phi)*sin(e_the) - en*kappa2*q*sin(e_phi)*sin(e_the) - kappa1*u*cos(e_psi)*cos(e_the)*sin(e_psi) - kappa1*w*cos(e_phi)*cos(e_psi)*sin(e_psi)*sin(e_the) - kappa1*v*cos(e_psi)*sin(e_phi)*sin(e_psi)*sin(e_the))/(cos(e_the)*(u*cos(e_psi)*cos(e_the) - v*cos(e_phi)*sin(e_psi) + w*sin(e_phi)*sin(e_psi) + w*cos(e_phi)*cos(e_psi)*sin(e_the) + v*cos(e_psi)*sin(e_phi)*sin(e_the)))
+    -(r*sin(e_phi) - q*cos(e_phi) + kappa1*u*cos(e_psi)^2*cos(e_the) - eb*kappa1*q*cos(e_phi) + en*kappa2*q*cos(e_phi) + eb*kappa1*r*sin(e_phi) - en*kappa2*r*sin(e_phi) + kappa1*w*cos(e_phi)*cos(e_psi)^2*sin(e_the) + kappa1*v*cos(e_psi)^2*sin(e_phi)*sin(e_the) - kappa1*v*cos(e_phi)*cos(e_psi)*sin(e_psi) + kappa1*w*cos(e_psi)*sin(e_phi)*sin(e_psi))/(u*cos(e_psi)*cos(e_the) - v*cos(e_phi)*sin(e_psi) + w*sin(e_phi)*sin(e_psi) + w*cos(e_phi)*cos(e_psi)*sin(e_the) + v*cos(e_psi)*sin(e_phi)*sin(e_the))
+    -(((sin(e_phi)*((kappa1*(cos(e_phi)*cos(e_psi) + sin(e_phi)*sin(e_psi)*sin(e_the))*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(eb*kappa1 - en*kappa2 + 1) - q + (kappa2*cos(e_the)*sin(e_phi)*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(eb*kappa1 - en*kappa2 + 1)))/cos(e_the) - (cos(e_phi)*(r + (kappa1*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the))*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(eb*kappa1 - en*kappa2 + 1) - (kappa2*cos(e_phi)*cos(e_the)*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))/(eb*kappa1 - en*kappa2 + 1)))/cos(e_the))*(eb*kappa1 - en*kappa2 + 1))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    -((eb*kappa1 - en*kappa2 + 1)*(q*w - r*v + gz_p*sin(e_the) - gx_p*cos(e_psi)*cos(e_the) - gy_p*cos(e_the)*sin(e_psi) + (Cd*u*abs(u))/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    -((eb*kappa1 - en*kappa2 + 1)*(gx_p*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) - gy_p*(cos(e_phi)*cos(e_psi) + sin(e_phi)*sin(e_psi)*sin(e_the)) - p*w + r*u - gz_p*cos(e_the)*sin(e_phi) + (Cd*v*abs(v))/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    ((eb*kappa1 - en*kappa2 + 1)*(gx_p*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - gy_p*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the)) - p*v + q*u + (Fz - Cd*w*abs(w))/m + gz_p*cos(e_phi)*cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
+    ((eb*kappa1 - en*kappa2 + 1)*(Mx + I_yy*q*r - I_zz*q*r))/(I_xx*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
+    ((eb*kappa1 - en*kappa2 + 1)*(My - I_xx*p*r + I_zz*p*r))/(I_yy*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
+    ((eb*kappa1 - en*kappa2 + 1)*(Mz + I_xx*p*q - I_yy*p*q))/(I_zz*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
     ];
 
+
 for k=1:N % loop over control intervals
-   kappa = path.kappa_arr(k);
-   tau = path.tau_arr(k);
-   ds = path.s_arr(k + 1) ...
-       - path.s_arr(k);
+    kappa1 = path.kap1_arr(k);
+    kappa2 = path.kap2_arr(k);
+    ds = path.s_arr(k + 1) ...
+        - path.s_arr(k);
 
-   earth_axes_in_body = CE2B([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
-   gravity_vec = g * -earth_axes_in_body(:,3);
+    earth_axes_in_body = CE2B([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+    gravity_vec = g * -earth_axes_in_body(:,3);
 
-   % 1st Order Explicit Euler's Integration
-   k1 = f(X(1,k), X(2,k), X(3,k), X(4,k), X(5,k), X(6,k),...
-       X(7,k), X(8,k), X(9,k), X(10,k), X(11,k), X(12,k), U(1,k), U(2,k), U(3,k), U(4,k), ...
-       kappa, tau, gravity_vec(1), gravity_vec(2), gravity_vec(3));
-   x_next = X(:,k) + ds * k1;
-   
-   % Algebraic relation between optimization parameters and propagation
-   opti.subject_to(X(:,k+1)==x_next);
+    % 1st Order Explicit Euler's Integration
+    k1 = f(X(1,k), X(2,k), X(3,k), X(4,k), X(5,k), X(6,k),...
+        X(7,k), X(8,k), X(9,k), X(10,k), X(11,k), X(12,k), U(1,k), U(2,k), U(3,k), U(4,k), ...
+        kappa1, kappa2, gravity_vec(1), gravity_vec(2), gravity_vec(3));
+    x_next = X(:,k) + ds * k1;
+
+    % Algebraic relation between optimization parameters and propagation
+    opti.subject_to(X(:,k+1)==x_next);
+
+    opti.subject_to(FM2w * U(:,k) < [1,1,1,1]');
+    opti.subject_to(FM2w * U(:,k) > [0,0,0,0]');
 
 end
 
@@ -141,10 +141,11 @@ opti.subject_to(sqrt(u.^2 + v.^2 + w.^2) <= V_max);
 opti.subject_to(sqrt(u.^2 + v.^2 + w.^2) >= -V_max);
 
 % Corridor Constraints
-opti.subject_to(en <= 0.5);
-opti.subject_to(eb <= 0.5);
-opti.subject_to(en >= -0.5);
-opti.subject_to(eb >= -0.5);
+% opti.subject_to(en <= 0.5);
+% opti.subject_to(eb <= 0.5);
+% opti.subject_to(en >= -0.5);
+% opti.subject_to(eb >= -0.5);
+opti.subject_to(en.^2 + eb.^2 <= 0.5^2);
 
 % Angle Constraints
 opti.subject_to(ephi <= pi);
@@ -169,6 +170,8 @@ opti.subject_to(t(1) == 0);
 % opti.subject_to(r(1) == 0);
 % opti.subject_to(en(1) == -0.2);
 % opti.subject_to(eb(1) == 0);
+% opti.subject_to(en == 0);
+% opti.subject_to(eb == 0);
 opti.subject_to(en(1) == en(end));
 opti.subject_to(eb(1) == eb(end));
 opti.subject_to(ephi(1) == ephi(end));
@@ -246,8 +249,8 @@ z_arr = zeros(1,length(distance_arr));
 k = 0;
 
 edges = [0, 0, 0, 0, 0;
-         0.5, -0.5, -0.5, 0.5, 0.5;
-         0.5, 0.5, -0.5, -0.5, 0.5];
+    0.5, -0.5, -0.5, 0.5, 0.5;
+    0.5, 0.5, -0.5, -0.5, 0.5];
 edges_e_list = [];
 pp0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
@@ -352,7 +355,7 @@ legend('M_x','M_y','M_z')
 figure(3)
 p_hist = [p];
 k = 1;
-cla;
+% cla;
 setDefaultFigureProperties();
 dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
 dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
@@ -367,9 +370,9 @@ bx = [p, p + dcm_b_e(:,1)];
 by = [p, p + dcm_b_e(:,2)];
 bz = [p, p + dcm_b_e(:,3)];
 
-plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
-plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
-plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
+% plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
+% plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
+% plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
 
 
 % Ground truth of velocity frame
@@ -382,20 +385,24 @@ vx = [p, p + dcm_b_e * v_vec / norm(v_vec)];
 % t_vec = [p, p + dcm_b_e(:,3) * T_com_arr(k)];
 % plot3(t_vec(1,:), t_vec(2,:), t_vec(3,:), 'LineWidth', 3, 'Color', 'cyan');
 
-eilist_size = size(edges_e_list);
-for ei = 2:5:eilist_size(3)-1
-edges_ei = edges_e_list(:,:,ei);
-plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+if RRRR == 1 && TTTT == 1
+    eilist_size = size(edges_e_list);
+    for ei = 2:5:eilist_size(3)-1
+        edges_ei = edges_e_list(:,:,ei);
+        % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+        plotCircle3D([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+            [path.tt_arr(:,ei)'],0.5,'k', 1)
+    end
 end
-edges_ei = edges_e_list(:,:,1);
-plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
-edges_ei = edges_e_list(:,:,end-1);
-plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'r', 'LineWidth', 4), hold on
-
-plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
-plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
-plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
-plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+% edges_ei = edges_e_list(:,:,1);
+% plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
+% edges_ei = edges_e_list(:,:,end-1);
+% plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'r', 'LineWidth', 4), hold on
+%
+% plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
 daspect([1,1,1])
 legend({'Centerline', 'Optimal Trajectory', ...
     '$$\hat{x_{\mathcal{B}}}$$', '$$\hat{y_{\mathcal{B}}}$$', ...
@@ -445,14 +452,14 @@ for k=1:5:N-1
     dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_b_e = dcm_p_e * dcm_b_p;
-    
+
     pp = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     p = dcm_p_e * [0; en_arr(k); eb_arr(k)] + pp;
-    
+
     bx = [p, p + dcm_b_e(:,1)];
     by = [p, p + dcm_b_e(:,2)];
     bz = [p, p + dcm_b_e(:,3)];
-    
+
     plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
     plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
     plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
@@ -463,12 +470,12 @@ for k=1:5:N-1
     im = frame2im(frame);
     [A,map] = rgb2ind(im,256);
 
-    % Write to the GIF File
-    if k == 1
-        imwrite(A,map,filename,'gif','LoopCount',Inf,'DelayTime',0.1);
-    else
-        imwrite(A,map,filename,'gif','WriteMode','append','DelayTime',0.1);
-    end
+    % % Write to the GIF File
+    % if k == 1
+    %     imwrite(A,map,filename,'gif','LoopCount',Inf,'DelayTime',0.1);
+    % else
+    %     imwrite(A,map,filename,'gif','WriteMode','append','DelayTime',0.1);
+    % end
 
 end
 daspect([1,1,1])
@@ -477,7 +484,7 @@ legend({'Centerline', 'Optimal Trajectory', ...
     '$$\hat{z_{\mathcal{B}}}$$'}, 'interpreter', 'latex', 'Location','northeast')
 xlabel('East'), ylabel('North'), zlabel('Up'), title('Centerline and The Optimal Solution')
 
-%% Open Loop Test Plot
+% Open Loop Test Plot
 figure(5)
 plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2, 'LineStyle', '--'); hold on
 plot3(x_arr, y_arr, z_arr, 'LineWidth', 2);
@@ -493,18 +500,18 @@ w_res = [p_arr(1); q_arr(1); r_arr(1)];
 [a,b,c] = dcm2angle(dcm_b_e_res');
 E_res = [c;b;a];
 for k=1:1:N-1
-dt = time_arr(k+1) - time_arr(k);
-T_res = [0;0;T_com_arr(k)];
-D_res = -Cd * v_res;
-F_res = T_res + D_res;
-M_res = [Mx_com_arr(k); My_com_arr(k); Mz_com_arr(k)];
-C_res = CB2E(E_res);
+    dt = time_arr(k+1) - time_arr(k);
+    T_res = [0;0;T_com_arr(k)];
+    D_res = -Cd * v_res;
+    F_res = T_res + D_res;
+    M_res = [Mx_com_arr(k); My_com_arr(k); Mz_com_arr(k)];
+    C_res = CB2E(E_res);
 
-P_res = P_res + dt * CB2E(E_res) * v_res;
-v_res = v_res + dt * (F_res/m + C_res'*[0;0;-g] - cross(w_res, v_res));
-E_res = E_res + dt * W2ED(w_res, E_res);
-w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));
-P_res_all = [P_res_all, P_res];
+    P_res = P_res + dt * CB2E(E_res) * v_res;
+    v_res = v_res + dt * (F_res/m + C_res'*[0;0;-g] - cross(w_res, v_res));
+    E_res = E_res + dt * W2ED(w_res, E_res);
+    w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));
+    P_res_all = [P_res_all, P_res];
 end
 plot3(P_res_all(1,:), P_res_all(2,:), P_res_all(3,:),'LineWidth',2,'Color', 'green')
 
