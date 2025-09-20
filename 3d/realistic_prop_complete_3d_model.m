@@ -11,7 +11,7 @@ import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('ellipse_2d.mat');
+path = load('trefoil.mat');
 filename = 'ellipse_2d.gif';
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
@@ -30,7 +30,7 @@ U = [Fz, Mx, My, Mz]
 %}
 
 %% Constants
-T_max = 5;
+T_max = 15;
 T_min = 0;
 g = 9.81;
 Cd = 0.3;
@@ -44,7 +44,7 @@ I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
 Mxy_max = (T_max/4) * (0.15 * sqrt(2) / 2) * 4;
 Mz_max = Mxy_max/ 5;
 
-V_max = 100;
+V_max = 30;
 
 FM2w = [0.2000    0.9425   -0.9425    4.7125;
         0.2000    0.9425    0.9425   -4.7125;

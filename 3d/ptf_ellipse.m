@@ -8,7 +8,7 @@ samples = 200;
 t = linspace(0, 2*pi, samples);  % parametric variable
 
 % Parameters to control shape
-a = 2;      % major amplitude (horizontal)
+a = 5;      % major amplitude (horizontal)
 b = 5;    % vertical amplitude
 c = 0;    % depth amplitude (3D deviation)
 
@@ -26,7 +26,6 @@ ys = b * sin(t_s);
 zs = c * t_s;
 
 r = [xs, ys, zs]';
-r_d = simplify(diff(r, t_s));
 r_d = simplify(diff(r, t_s));
 r_dd = simplify(diff(r_d, t_s));
 
@@ -50,8 +49,8 @@ roll_arr = [];
 p_prev = double(subs(r, t_s, start));
 tt = double(subs(ts, t_s, start));
 null_tt = null(tt');
-nn = [0;0;1]; %null_tt(:,1);
-bb = [1;0;0]; %null_tt(:,2);
+nn = [-1;0;0]; %null_tt(:,1);
+bb = [0;0;1]; %null_tt(:,2);
 
 plot3(x, y, z, 'k', 'LineWidth', 2);
 axis equal;
@@ -69,9 +68,9 @@ for i = 1:1:samples
     dt = 2 * pi / samples;
     p = double(subs(r, t_s, ts_e));
     ds = norm(p - p_prev);
+    dtds =  dt/ds
 
     % Substitutions for the points, curvature, torsion, arclength
-    dtds =  dt/ds
     x_arr = [x_arr, p(1)];
     y_arr = [y_arr, p(2)];
     z_arr = [z_arr, p(3)];
@@ -84,6 +83,10 @@ for i = 1:1:samples
     
     omega_p = [tt, nn, bb]' * omega;
     omega_p(1) = 0;
+
+    kap1_arr = [kap1_arr, dtds * omega_p(2,1)];
+    kap2_arr = [kap2_arr, dtds * omega_p(3,1)];
+
     % dcm_prime = [tt, nn, bb] * skew([tt, nn, bb]' * omega);
     dcm_prime = skew(omega) * [tt, nn, bb];
     tt = tt + dt * dcm_prime(:,1);
@@ -104,7 +107,7 @@ for i = 1:1:samples
     pb = [p, p + bb];
     omegab = [p, p + omega];
 
-    if mod(i,15) == 0
+    if mod(i,1) == 0
         plot3(pt(1,:), pt(2,:), pt(3,:), 'LineWidth', 2, 'Color', 'r');
         plot3(pn(1,:), pn(2,:), pn(3,:), 'LineWidth', 2, 'Color', 'g');
         plot3(pb(1,:), pb(2,:), pb(3,:), 'LineWidth', 2, 'Color', 'b');
@@ -115,28 +118,25 @@ for i = 1:1:samples
 end
 s_arr = s_arr(2:end);
 
-p_prev = double(subs(r, t_s, start));
-for i = 1:1:samples
-    ts_e = i * 2 * pi / samples + start;
-    dt = 2 * pi / samples;
-    p = double(subs(r, t_s, ts_e));
-    ds = norm(p - p_prev);
-    dtds =  dt/ds;
-    % No torsion angular velocity
-    omega = cross(double(subs(r_d, t_s, ts_e)), ...
-        double(subs(r_dd, t_s, ts_e))) / norm(double(subs(r_d, t_s, ts_e)))^2;
-    omega = cross(double(subs(r_d, t_s, ts_e)), ...
-        double(subs(r_dd, t_s, ts_e))) / norm(double(subs(r_d, t_s, ts_e)))^2;
-    % dcm_prime = skew(omega) * [tt, nn, bb];
-    tt = tt_arr(:,i);
-    nn = nn_arr(:,i);
-    bb = bb_arr(:,i);
-    omega_p = [tt, nn, bb]' * omega;
-    [omega, omega_p]
-    kap1_arr = [kap1_arr, dtds * omega_p(2,1)];
-    kap2_arr = [kap2_arr, dtds * omega_p(3,1)];
-    p_prev = p;
-end
+% p_prev = double(subs(r, t_s, start));
+% for i = 1:1:samples
+%     ts_e = i * 2 * pi / samples + start;
+%     dt = 2 * pi / samples;
+%     p = double(subs(r, t_s, ts_e));
+%     ds = norm(p - p_prev);
+%     dtds =  dt/ds;
+%     % No torsion angular velocity
+%     omega = cross(double(subs(r_d, t_s, ts_e)), ...
+%         double(subs(r_dd, t_s, ts_e))) / norm(double(subs(r_d, t_s, ts_e)))^2;
+%     % dcm_prime = skew(omega) * [tt, nn, bb];
+%     tt = tt_arr(:,i);
+%     nn = nn_arr(:,i);
+%     bb = bb_arr(:,i);
+%     omega_p = [tt, nn, bb]' * omega;
+%     kap1_arr = [kap1_arr, dtds * omega_p(2,1)];
+%     kap2_arr = [kap2_arr, dtds * omega_p(3,1)];
+%     p_prev = p;
+% end
 
 figure(2)
 plot(s_arr, kap1_arr, 'LineWidth', 4);
