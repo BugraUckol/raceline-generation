@@ -6,8 +6,8 @@ clc, clear, close all
 t = linspace(0, 2*pi, 200);  % parametric variable
 
 % Parameters to control shape
-a = 2;      % major amplitude (horizontal)
-b = 5;    % vertical amplitude
+a = 5;      % major amplitude (horizontal)
+b = 2;    % vertical amplitude
 c = 0;    % depth amplitude (3D deviation)
 
 % Parametric equations for 3D figure-eight curve

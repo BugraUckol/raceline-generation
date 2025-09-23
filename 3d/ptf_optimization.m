@@ -4,14 +4,14 @@ clc, clear
 %   given constraints from the past
 
 %% Casadi Imports
-% addpath("C:\Users\bugrauckol\Desktop\bugra\casadi")
+addpath("C:\Users\bugrauckol\Desktop\bugra\casadi")
 % addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
-addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("/Users/bugrauckol/Documents/share/casadi-3")
 import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('trefoil_ptf.mat');
+path = load('ellipse_ptf.mat');
 % filename = 'trefoil_ptf.gif';
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
@@ -152,11 +152,11 @@ opti.subject_to(epsi >= -pi);
 
 % Initial Conditions
 opti.subject_to(t(1) == 0);
-opti.subject_to(en(1) == 0);
-opti.subject_to(eb(1) == 0);
-opti.subject_to(ephi(1) == 0);
-opti.subject_to(ethe(1) == 0);
-opti.subject_to(epsi(1) == 0);
+% opti.subject_to(en(1) == 0);
+% opti.subject_to(eb(1) == 0);
+% opti.subject_to(ephi(1) == 0);
+% opti.subject_to(ethe(1) == 0);
+% opti.subject_to(epsi(1) == 0);
 % opti.subject_to(u(1) == 0);
 % opti.subject_to(v(1) == 0);
 % opti.subject_to(w(1) == 0);
@@ -165,17 +165,17 @@ opti.subject_to(epsi(1) == 0);
 % opti.subject_to(r(1) == 0);
 % opti.subject_to(en(1) == -0.2);
 % opti.subject_to(eb(1) == 0);
-% % opti.subject_to(en(1) == en(end));
-% % opti.subject_to(eb(1) == eb(end));
-% % opti.subject_to(ephi(1) == ephi(end));
-% % opti.subject_to(ethe(1) == ethe(end));
-% % opti.subject_to(epsi(1) == epsi(end));
-% % opti.subject_to(u(1) == u(end));
-% % opti.subject_to(v(1) == v(end));
-% % opti.subject_to(w(1) == w(end));
-% % opti.subject_to(p(1) == p(end));
-% % opti.subject_to(q(1) == q(end));
-% % opti.subject_to(r(1) == r(end));
+opti.subject_to(en(1) == en(end));
+opti.subject_to(eb(1) == eb(end));
+opti.subject_to(ephi(1) == ephi(end));
+opti.subject_to(ethe(1) == ethe(end));
+opti.subject_to(epsi(1) == epsi(end));
+opti.subject_to(u(1) == u(end));
+opti.subject_to(v(1) == v(end));
+opti.subject_to(w(1) == w(end));
+opti.subject_to(p(1) == p(end));
+opti.subject_to(q(1) == q(end));
+opti.subject_to(r(1) == r(end));
 
 % prevsol = load('prevsol_trefoil_ptf');
 % opti.set_initial(t(1:prevsol.N+1), prevsol.time_arr);
@@ -232,7 +232,7 @@ Mx_com_arr = sol.value(Mx_com);
 My_com_arr = sol.value(My_com);
 Mz_com_arr = sol.value(Mz_com);
 
-% save prevsol_trefoil_ptf N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
+save prevsol_trefoil_ptf N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
 
 %% 3D Recreation
 x_arr = zeros(1,length(distance_arr));
@@ -499,7 +499,7 @@ for k=1:1:N-1
     C_res = CB2E(E_res);
 
     P_res = P_res + dt * CB2E(E_res) * v_res;
-    C_res * F_res/m + [0;0;-g]
+    C_res * F_res/m + [0;0;-g];
     v_res = v_res + dt * (F_res/m + C_res'*[0;0;-g] - cross(w_res, v_res));
     E_res = E_res + dt * W2ED(w_res, E_res);
     w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));

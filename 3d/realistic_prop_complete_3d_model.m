@@ -1,17 +1,17 @@
 %% Prep
 clc, clear
-% Clear is especially important since the opti object should not be 
+% Clear is especially important since the opti object should not be
 %   given constraints from the past
 
 %% Casadi Imports
 % addpath("C:\Users\bugrauckol\Desktop\bugra\casadi")
-addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
-% addpath("/Users/bugrauckol/Documents/share/casadi-3")
+% addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
 import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('trefoil.mat');
+path = load('ellipse_2d.mat');
 filename = 'ellipse_2d.gif';
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
@@ -44,12 +44,12 @@ I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
 Mxy_max = (T_max/4) * (0.15 * sqrt(2) / 2) * 4;
 Mz_max = Mxy_max/ 5;
 
-V_max = 30;
+V_max = 100;
 
 FM2w = [0.2000    0.9425   -0.9425    4.7125;
-        0.2000    0.9425    0.9425   -4.7125;
-        0.2000   -0.9425    0.9425    4.7125;
-        0.2000   -0.9425   -0.9425   -4.7125];
+    0.2000    0.9425    0.9425   -4.7125;
+    0.2000   -0.9425    0.9425    4.7125;
+    0.2000   -0.9425   -0.9425   -4.7125];
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
@@ -98,7 +98,7 @@ f = @(tt,en,eb,e_phi,e_the,e_psi,u,v,w,p,q,r,Fz,Mx,My,Mz,kappa,tau,gx_p, gy_p, g
     ((en*kappa - 1)*(q*w - r*v + gz_p*sin(e_the) - gx_p*cos(e_psi)*cos(e_the) - gy_p*cos(e_the)*sin(e_psi) + (Cd*u)/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
     % dv / ds
     ((en*kappa - 1)*(gx_p*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) - gy_p*(cos(e_phi)*cos(e_psi) + sin(e_phi)*sin(e_psi)*sin(e_the)) - p*w + r*u - gz_p*cos(e_the)*sin(e_phi) + (Cd*v)/m))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
-     % dw / ds
+    % dw / ds
     -((en*kappa - 1)*(gx_p*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - gy_p*(cos(e_psi)*sin(e_phi) - cos(e_phi)*sin(e_psi)*sin(e_the)) - p*v + q*u + (Fz - Cd*w)/m + gz_p*cos(e_phi)*cos(e_the)))/(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the))
     % dp / ds
     -((en*kappa - 1)*(Mx + I_yy*q*r - I_zz*q*r))/(I_xx*(w*(sin(e_phi)*sin(e_psi) + cos(e_phi)*cos(e_psi)*sin(e_the)) - v*(cos(e_phi)*sin(e_psi) - cos(e_psi)*sin(e_phi)*sin(e_the)) + u*cos(e_psi)*cos(e_the)))
@@ -109,25 +109,25 @@ f = @(tt,en,eb,e_phi,e_the,e_psi,u,v,w,p,q,r,Fz,Mx,My,Mz,kappa,tau,gx_p, gy_p, g
     ];
 
 for k=1:N % loop over control intervals
-   kappa = path.kappa_arr(k);
-   tau = path.tau_arr(k);
-   ds = path.s_arr(k + 1) ...
-       - path.s_arr(k);
+    kappa = path.kappa_arr(k);
+    tau = path.tau_arr(k);
+    ds = path.s_arr(k + 1) ...
+        - path.s_arr(k);
 
-   earth_axes_in_body = CE2B([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
-   gravity_vec = g * -earth_axes_in_body(:,3);
+    earth_axes_in_body = CE2B([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+    gravity_vec = g * -earth_axes_in_body(:,3);
 
-   % 1st Order Explicit Euler's Integration
-   k1 = f(X(1,k), X(2,k), X(3,k), X(4,k), X(5,k), X(6,k),...
-       X(7,k), X(8,k), X(9,k), X(10,k), X(11,k), X(12,k), U(1,k), U(2,k), U(3,k), U(4,k), ...
-       kappa, tau, gravity_vec(1), gravity_vec(2), gravity_vec(3));
-   x_next = X(:,k) + ds * k1;
-   
-   % Algebraic relation between optimization parameters and propagation
-   opti.subject_to(X(:,k+1)==x_next);
+    % 1st Order Explicit Euler's Integration
+    k1 = f(X(1,k), X(2,k), X(3,k), X(4,k), X(5,k), X(6,k),...
+        X(7,k), X(8,k), X(9,k), X(10,k), X(11,k), X(12,k), U(1,k), U(2,k), U(3,k), U(4,k), ...
+        kappa, tau, gravity_vec(1), gravity_vec(2), gravity_vec(3));
+    x_next = X(:,k) + ds * k1;
 
-   opti.subject_to(FM2w * U(:,k) < [1,1,1,1]');
-   opti.subject_to(FM2w * U(:,k) > [0,0,0,0]');
+    % Algebraic relation between optimization parameters and propagation
+    opti.subject_to(X(:,k+1)==x_next);
+
+    opti.subject_to(FM2w * U(:,k) < [1,1,1,1]');
+    opti.subject_to(FM2w * U(:,k) > [0,0,0,0]');
 
 end
 
@@ -153,7 +153,7 @@ opti.subject_to(sqrt(u.^2 + v.^2 + w.^2) >= -V_max);
 % opti.subject_to(eb <= 0.5);
 % opti.subject_to(en >= -0.5);
 % opti.subject_to(eb >= -0.5);
-opti.subject_to(en.^2 + eb.^2 <= 0.75^2);
+opti.subject_to(en.^2 + eb.^2 <= 0.65^2);
 
 % Angle Constraints
 opti.subject_to(ephi <= pi);
@@ -165,7 +165,7 @@ opti.subject_to(epsi >= -pi);
 
 % Initial Conditions
 opti.subject_to(t(1) == 0);
-% opti.subject_to(en(1) == e_n0);
+% opti.subject_to(en == 0.70);
 % opti.subject_to(eb(1) == e_b0);
 % opti.subject_to(ephi(1) == e_phi0);
 % opti.subject_to(ethe(1) == e_the0);
@@ -245,7 +245,7 @@ Mx_com_arr = sol.value(Mx_com);
 My_com_arr = sol.value(My_com);
 Mz_com_arr = sol.value(Mz_com);
 
-% save prevsol_trefoil_1000_cyclic N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
+save prevsol_trefoil_frenet N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
 
 %% 3D Recreation
 x_arr = zeros(1,length(distance_arr));
@@ -255,13 +255,14 @@ z_arr = zeros(1,length(distance_arr));
 k = 0;
 
 edges = [0, 0, 0, 0, 0;
-         0.5, -0.5, -0.5, 0.5, 0.5;
-         0.5, 0.5, -0.5, -0.5, 0.5];
+    0.5, -0.5, -0.5, 0.5, 0.5;
+    0.5, 0.5, -0.5, -0.5, 0.5];
 edges_e_list = [];
 pp0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 
 p = dcm_p_e * [0; en_arr(1); en_arr(1)] + pp0;
+ps = dcm_p_e * [0; 0.65; 0] + pp0;
 % dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
 for point = distance_arr
     k = k + 1;
@@ -269,12 +270,24 @@ for point = distance_arr
     c_p2e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     rpe_e = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     rbp_e = c_p2e * [0; en_arr(k); eb_arr(k)];
+    rsp_e = c_p2e * [0; 0.65; 0];
+    rwp_e = c_p2e * [0; 0.25 * sin(k/5); 0.25 * cos(k/5)];
 
     rbe_e = rpe_e + rbp_e;
+    rse_e = rpe_e + rsp_e;
+    rwe_e = rpe_e + rwp_e;
 
     x_arr(k) = rbe_e(1,1);
     y_arr(k) = rbe_e(2,1);
     z_arr(k) = rbe_e(3,1);
+
+    shortest_x_arr(k) = rse_e(1,1);
+    shortest_y_arr(k) = rse_e(2,1);
+    shortest_z_arr(k) = rse_e(3,1);
+
+    wave_x_arr(k) = rwe_e(1,1);
+    wave_y_arr(k) = rwe_e(2,1);
+    wave_z_arr(k) = rwe_e(3,1);
 
     pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     ptx = [pt, pt + c_p2e(:,1) * 1.5];
@@ -393,16 +406,16 @@ vx = [p, p + dcm_b_e * v_vec / norm(v_vec)];
 
 eilist_size = size(edges_e_list);
 for ei = 2:5:eilist_size(3)-1
-edges_ei = edges_e_list(:,:,ei);
-% plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
-plotCircle3D([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
-    [path.tt_arr(:,ei)'],0.75,'k', 1)
+    edges_ei = edges_e_list(:,:,ei);
+    % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    plotCircle3D([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+        [path.tt_arr(:,ei)'],0.65,'k', 1)
 end
 % edges_ei = edges_e_list(:,:,1);
 % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
 % edges_ei = edges_e_list(:,:,end-1);
 % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'r', 'LineWidth', 4), hold on
-% 
+%
 % plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
 % plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
 % plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
@@ -456,14 +469,14 @@ for k=1:5:N-1
     dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_b_e = dcm_p_e * dcm_b_p;
-    
+
     pp = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     p = dcm_p_e * [0; en_arr(k); eb_arr(k)] + pp;
-    
+
     bx = [p, p + dcm_b_e(:,1)];
     by = [p, p + dcm_b_e(:,2)];
     bz = [p, p + dcm_b_e(:,3)];
-    
+
     plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
     plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
     plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
@@ -504,18 +517,18 @@ w_res = [p_arr(1); q_arr(1); r_arr(1)];
 [a,b,c] = dcm2angle(dcm_b_e_res');
 E_res = [c;b;a];
 for k=1:1:N-1
-dt = time_arr(k+1) - time_arr(k);
-T_res = [0;0;T_com_arr(k)];
-D_res = -Cd * v_res;
-F_res = T_res + D_res;
-M_res = [Mx_com_arr(k); My_com_arr(k); Mz_com_arr(k)];
-C_res = CB2E(E_res);
+    dt = time_arr(k+1) - time_arr(k);
+    T_res = [0;0;T_com_arr(k)];
+    D_res = -Cd * v_res;
+    F_res = T_res + D_res;
+    M_res = [Mx_com_arr(k); My_com_arr(k); Mz_com_arr(k)];
+    C_res = CB2E(E_res);
 
-P_res = P_res + dt * CB2E(E_res) * v_res;
-v_res = v_res + dt * (F_res/m + C_res'*[0;0;-g] - cross(w_res, v_res));
-E_res = E_res + dt * W2ED(w_res, E_res);
-w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));
-P_res_all = [P_res_all, P_res];
+    P_res = P_res + dt * CB2E(E_res) * v_res;
+    v_res = v_res + dt * (F_res/m + C_res'*[0;0;-g] - cross(w_res, v_res));
+    E_res = E_res + dt * W2ED(w_res, E_res);
+    w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));
+    P_res_all = [P_res_all, P_res];
 end
 plot3(P_res_all(1,:), P_res_all(2,:), P_res_all(3,:),'LineWidth',2,'Color', 'green')
 
@@ -535,3 +548,74 @@ plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
 
 legend({'Centerline', 'Optimal Trajectory', 'Open Loop Results'}, 'Location','northeast')
 xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube, Optimal Solution and Open Loop Results')
+
+%% 3D Empty
+figure(6)
+p_hist = [p];
+k = 1;
+cla;
+
+sl = surfl(squeeze(points_arr(1,:,:)), squeeze(points_arr(2,:,:)), ...
+    squeeze(points_arr(3,:,:))); hold on
+sl.EdgeColor = 'none';
+sl.FaceAlpha = 0.15;
+
+setDefaultFigureProperties();
+dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
+dcm_b_e = dcm_p_e * dcm_b_p;
+
+plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 5)
+plot3(shortest_x_arr, shortest_y_arr, shortest_z_arr, 'LineWidth', 5)
+plot3(wave_x_arr, wave_y_arr, wave_z_arr, 'LineWidth', 5)
+plot3(x_arr, y_arr, z_arr, 'LineWidth', 5)
+pp = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
+p = dcm_p_e * [0; en_arr(k); eb_arr(k)] + pp;
+
+bx = [p, p + dcm_b_e(:,1)];
+by = [p, p + dcm_b_e(:,2)];
+bz = [p, p + dcm_b_e(:,3)];
+
+% plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
+% plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
+% plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
+
+
+% Ground truth of velocity frame
+v_vec = [u_arr(k); v_arr(k); w_arr(k)];
+vx = [p, p + dcm_b_e * v_vec / norm(v_vec)];
+% Plot Velocity Frame
+% plot3(vx(1,:), vx(2,:), vx(3,:), 'LineWidth', 3, 'Color', 'm');
+
+% Plot Thrust Vector
+% t_vec = [p, p + dcm_b_e(:,3) * T_com_arr(k)];
+% plot3(t_vec(1,:), t_vec(2,:), t_vec(3,:), 'LineWidth', 3, 'Color', 'cyan');
+points_arr = [];
+eilist_size = size(edges_e_list);
+counter = 0;
+plotCircle3D([path.x_arr(1), path.y_arr(1), path.z_arr(1)], ...
+    [path.tt_arr(:,1)'],0.65,'g', 5);
+plotCircle3D([path.x_arr(end), path.y_arr(end), path.z_arr(end)], ...
+    [path.tt_arr(:,end)'],0.65,'r', 5);
+for ei = 2:1:eilist_size(3)-1
+    counter = counter + 1;
+    edges_ei = edges_e_list(:,:,ei);
+    % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+        [path.tt_arr(:,ei)'],0.65,'k', 0.005, 0);
+    if mod(counter,5) == 0
+        points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+            [path.tt_arr(:,ei)'],0.65,'k', 0.005, 1);
+    end
+    points_arr(:,:,counter) = points;
+end
+
+% plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+daspect([1,1,1])
+legend({'Tube', 'Centerline', 'Shortest Path', 'Spiraling Path', ...
+    'Optimal Path', 'Start', 'Finish'},...
+    'interpreter', 'latex', 'Location','northeast')
+xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube and The Optimal Solution')

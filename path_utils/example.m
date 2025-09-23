@@ -6,7 +6,7 @@ load yas_marina_xy.mat
 YasMarina = [YasMarina; YasMarina(1,:)];
 
 % Path calculations
-x_y_yaw_curv_s = points_to_yaw_curv_s(YasMarina, 1);
+x_y_yaw_curv_s = points_to_yaw_curv_s(YasMarina, 2);
 
 % Shift the track limits
 left_side = lateral_shift(x_y_yaw_curv_s,YasMarina(:,3));

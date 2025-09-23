@@ -4,7 +4,7 @@ setDefaultFigureProperties()
 
 %% Curve Generation
 % Parameter
-samples = 1000;
+samples = 200;
 t = linspace(0, 2*pi, samples);  % parametric variable
 
 % Parameters to control shape
