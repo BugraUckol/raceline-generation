@@ -30,7 +30,7 @@ U = [Fz, Mx, My, Mz]
 %}
 
 %% Constants
-T_max = 15;
+T_max = 3;
 T_min = 0;
 g = 9.81;
 Cd = 0.3;
@@ -381,7 +381,25 @@ dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
 dcm_b_e = dcm_p_e * dcm_b_p;
 
 plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2), hold on
-plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
+
+plotCircle3D([path.x_arr(1), path.y_arr(1), path.z_arr(1)], ...
+    [path.tt_arr(:,1)'],0.65,'g', 5);
+plotCircle3D([path.x_arr(end), path.y_arr(end), path.z_arr(end)], ...
+    [path.tt_arr(:,end)'],0.65,'r', 5);
+
+x = x_arr;
+y = y_arr;
+z = z_arr;
+v = sqrt(u_arr.^2 + v_arr.^2 + w_arr.^2);
+patch([x nan],[y nan],[z nan],[v nan], 'edgecolor', 'interp','LineWidth',5);
+hcb = colorbar;colormap(jet);
+colorTitleHandle = get(hcb,'Title');
+titleString = 'Total Velocity';
+set(colorTitleHandle ,{'String','Rotation','Position'},{ titleString,90,[60 200]});
+% xlabel('x1'), ylabel('y1'), zlabel('Step Size [s]'), title('Step Size and Trajectory')
+daspect([1,1,1])
+
+
 pp = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
 p = dcm_p_e * [0; en_arr(k); eb_arr(k)] + pp;
 
@@ -389,9 +407,9 @@ bx = [p, p + dcm_b_e(:,1)];
 by = [p, p + dcm_b_e(:,2)];
 bz = [p, p + dcm_b_e(:,3)];
 
-plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
-plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
-plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
+% plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
+% plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
+% plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
 
 
 % Ground truth of velocity frame
@@ -421,9 +439,7 @@ end
 % plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
 % plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
 daspect([1,1,1])
-legend({'Centerline', 'Optimal Trajectory', ...
-    '$$\hat{x_{\mathcal{B}}}$$', '$$\hat{y_{\mathcal{B}}}$$', ...
-    '$$\hat{z_{\mathcal{B}}}$$'}, 'interpreter', 'latex', 'Location','northeast')
+legend({'Centerline', 'Start', 'End'}, 'interpreter', 'latex', 'Location','northeast')
 xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube and The Optimal Solution')
 
 %% Results in 3D
@@ -555,6 +571,27 @@ p_hist = [p];
 k = 1;
 cla;
 
+points_arr = [];
+eilist_size = size(edges_e_list);
+counter = 0;
+for ei = 2:1:eilist_size(3)-1
+    counter = counter + 1;
+    edges_ei = edges_e_list(:,:,ei);
+    % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    if ei <= (eilist_size(3)-1)/2
+    points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+        [path.tt_arr(:,ei)'],0.65,'k', 0.005, 0);
+    else
+    points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+        -[path.tt_arr(:,ei)'],0.65,'k', 0.005, 0);
+    end
+    if mod(counter,5) == 0
+        points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+            [path.tt_arr(:,ei)'],0.65,'k', 0.005, 0);
+    end
+    points_arr(:,:,counter) = points;
+end
+
 sl = surfl(squeeze(points_arr(1,:,:)), squeeze(points_arr(2,:,:)), ...
     squeeze(points_arr(3,:,:))); hold on
 sl.EdgeColor = 'none';
@@ -590,30 +627,30 @@ vx = [p, p + dcm_b_e * v_vec / norm(v_vec)];
 % Plot Thrust Vector
 % t_vec = [p, p + dcm_b_e(:,3) * T_com_arr(k)];
 % plot3(t_vec(1,:), t_vec(2,:), t_vec(3,:), 'LineWidth', 3, 'Color', 'cyan');
-points_arr = [];
-eilist_size = size(edges_e_list);
-counter = 0;
+
+% plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+
 plotCircle3D([path.x_arr(1), path.y_arr(1), path.z_arr(1)], ...
     [path.tt_arr(:,1)'],0.65,'g', 5);
 plotCircle3D([path.x_arr(end), path.y_arr(end), path.z_arr(end)], ...
     [path.tt_arr(:,end)'],0.65,'r', 5);
+
+counter = 0;
 for ei = 2:1:eilist_size(3)-1
     counter = counter + 1;
     edges_ei = edges_e_list(:,:,ei);
     % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
     points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
         [path.tt_arr(:,ei)'],0.65,'k', 0.005, 0);
-    if mod(counter,5) == 0
+    if mod(counter,1) == 0
         points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
             [path.tt_arr(:,ei)'],0.65,'k', 0.005, 1);
     end
-    points_arr(:,:,counter) = points;
 end
 
-% plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
-% plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
-% plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
-% plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
 daspect([1,1,1])
 legend({'Tube', 'Centerline', 'Shortest Path', 'Spiraling Path', ...
     'Optimal Path', 'Start', 'Finish'},...
