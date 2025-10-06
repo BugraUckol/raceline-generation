@@ -11,4 +11,5 @@ set(groot,'defaultAxesYMinorGrid','on','defaultAxesYMinorGridMode','manual');
 set(groot,'defaultAxesZMinorGrid','on','defaultAxesZMinorGridMode','manual');
 set(0,'defaultAxesBox','on','defaultAxesBoxMode','manual')
 set(0,'DefaultTextInterpreter', 'latex')
+set(0,'DefaultFigureWindowStyle', 'docked')
 end

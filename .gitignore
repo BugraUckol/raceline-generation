@@ -7,3 +7,7 @@ slprj/*
 *.mat
 *.asv
 *.DS_Store
+*.gif
+*.png
+*.eps
+*.pdf

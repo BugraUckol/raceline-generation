@@ -4,14 +4,14 @@ clc, clear
 %   given constraints from the past
 
 %% Casadi Imports
-addpath("C:\Users\bugrauckol\Desktop\bugra\casadi")
+% addpath("C:\Users\bugrauckol\Desktop\bugra\casadi")
 % addpath("C:\Program Files\casadi-3.6.7-windows64-matlab2018b")
-% addpath("/Users/bugrauckol/Documents/share/casadi-3")
+addpath("/Users/bugrauckol/Documents/share/casadi-3")
 import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('ellipse_ptf.mat');
+path = load('generic_ptf.mat');
 % filename = 'trefoil_ptf.gif';
 % path = load('trefoil.mat');
 % path = load('half_circle_2d.mat');
@@ -140,7 +140,7 @@ opti.subject_to(u.^2 + v.^2 + w.^2 <= V_max^2);
 % opti.subject_to(eb <= 0.5);
 % opti.subject_to(en >= -0.5);
 % opti.subject_to(eb >= -0.5);
-opti.subject_to(en.^2 + eb.^2 <= 0.75^2);
+opti.subject_to(en.^2 + eb.^2 <= 0.65^2);
 
 % Angle Constraints
 opti.subject_to(ephi <= pi);
@@ -232,8 +232,9 @@ Mx_com_arr = sol.value(Mx_com);
 My_com_arr = sol.value(My_com);
 Mz_com_arr = sol.value(Mz_com);
 
-save prevsol_trefoil_ptf N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
+save prevsolve_generic_ptf N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
 
+%% 3D Recreation
 %% 3D Recreation
 x_arr = zeros(1,length(distance_arr));
 y_arr = zeros(1,length(distance_arr));
@@ -249,6 +250,7 @@ pp0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 
 p = dcm_p_e * [0; en_arr(1); en_arr(1)] + pp0;
+ps = dcm_p_e * [0; 0.65; 0] + pp0;
 % dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
 for point = distance_arr
     k = k + 1;
@@ -256,12 +258,24 @@ for point = distance_arr
     c_p2e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     rpe_e = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     rbp_e = c_p2e * [0; en_arr(k); eb_arr(k)];
+    rsp_e = c_p2e * [0; 0.65; 0];
+    rwp_e = c_p2e * [0; 0.25 * sin(k/15); 0.25 * cos(k/15)];
 
     rbe_e = rpe_e + rbp_e;
+    rse_e = rpe_e + rsp_e;
+    rwe_e = rpe_e + rwp_e;
 
     x_arr(k) = rbe_e(1,1);
     y_arr(k) = rbe_e(2,1);
     z_arr(k) = rbe_e(3,1);
+
+    shortest_x_arr(k) = rse_e(1,1);
+    shortest_y_arr(k) = rse_e(2,1);
+    shortest_z_arr(k) = rse_e(3,1);
+
+    wave_x_arr(k) = rwe_e(1,1);
+    wave_y_arr(k) = rwe_e(2,1);
+    wave_z_arr(k) = rwe_e(3,1);
 
     pt = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
     ptx = [pt, pt + c_p2e(:,1) * 1.5];
@@ -523,3 +537,91 @@ plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
 
 legend({'Centerline', 'Optimal Trajectory', 'Open Loop Results'}, 'Location','northeast')
 xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube, Optimal Solution and Open Loop Results')
+%% 3D Empty
+figure(6)
+p_hist = [p];
+k = 1;
+cla;
+hold on
+
+points_arr = [];
+eilist_size = size(edges_e_list);
+counter = 0;
+for ei = 2:1:eilist_size(3)-1
+    counter = counter + 1;
+    edges_ei = edges_e_list(:,:,ei);
+    % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+        [path.tt_arr(:,ei)'],0.65,'k', 0.005, 0);
+    % if mod(counter,5) == 0
+        % points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+            % [path.tt_arr(:,ei)'],0.65,'k', 0.005, 1);
+    % end
+    points_arr(:,:,counter) = points;
+end
+
+sl = surfl(squeeze(points_arr(1,:,:)), squeeze(points_arr(2,:,:)), ...
+    squeeze(points_arr(3,:,:))); hold on
+sl.EdgeColor = 'none';
+sl.FaceAlpha = 0.25;
+sl.FaceColor = [0.5 0.5 0.5];
+
+setDefaultFigureProperties();
+dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
+dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
+dcm_b_e = dcm_p_e * dcm_b_p;
+
+plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 5)
+plot3(shortest_x_arr, shortest_y_arr, shortest_z_arr, 'LineWidth', 5)
+plot3(wave_x_arr, wave_y_arr, wave_z_arr, 'LineWidth', 5)
+plot3(x_arr, y_arr, z_arr, 'LineWidth', 5)
+pp = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
+p = dcm_p_e * [0; en_arr(k); eb_arr(k)] + pp;
+
+bx = [p, p + dcm_b_e(:,1)];
+by = [p, p + dcm_b_e(:,2)];
+bz = [p, p + dcm_b_e(:,3)];
+
+% plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
+% plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
+% plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
+
+
+% Ground truth of velocity frame
+v_vec = [u_arr(k); v_arr(k); w_arr(k)];
+vx = [p, p + dcm_b_e * v_vec / norm(v_vec)];
+% Plot Velocity Frame
+% plot3(vx(1,:), vx(2,:), vx(3,:), 'LineWidth', 3, 'Color', 'm');
+
+% Plot Thrust Vector
+% t_vec = [p, p + dcm_b_e(:,3) * T_com_arr(k)];
+% plot3(t_vec(1,:), t_vec(2,:), t_vec(3,:), 'LineWidth', 3, 'Color', 'cyan');
+
+% plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+% plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+
+plotCircle3D([path.x_arr(1), path.y_arr(1), path.z_arr(1)], ...
+    [path.tt_arr(:,1)'],0.65,'g', 5);
+plotCircle3D([path.x_arr(end), path.y_arr(end), path.z_arr(end)], ...
+    [path.tt_arr(:,end)'],0.65,'r', 5);
+
+for ei = 2:1:eilist_size(3)-1
+    % counter = counter + 1;
+    % edges_ei = edges_e_list(:,:,ei);
+    % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+    % points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+        % [path.tt_arr(:,ei)'],0.65,'k', 0.2, 1);
+    if mod(ei,5) == 0
+        points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+            [path.tt_arr(:,ei)'],0.65,'k', 0.005, 1);
+    end
+    % points_arr(:,:,counter) = points;
+end
+
+daspect([1,1,1])
+legend({'Tube', 'Centerline', 'Shortest Path', 'Spiraling Path', ...
+    'Optimal Path', 'Start', 'Finish'},...
+    'interpreter', 'latex', 'Location','northeast')
+xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube and The Optimal Solution')
