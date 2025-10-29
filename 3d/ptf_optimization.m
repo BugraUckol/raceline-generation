@@ -11,9 +11,9 @@ import casadi.*
 
 %% Import path properties
 % path = load('three_d_infinity.mat');
-path = load('generic_ptf.mat');
+% path = load('generic_ptf.mat');
 % filename = 'trefoil_ptf.gif';
-% path = load('trefoil.mat');
+path = load('trefoil_ptf.mat');
 % path = load('half_circle_2d.mat');
 
 %% System Model
@@ -38,7 +38,7 @@ Cd = 0.3;
 m = 0.250;
 I_xx = 10e-2;
 I_yy = I_xx;
-I_zz = I_xx;
+I_zz = 2*I_xx;
 I_b = [I_xx, 0, 0; 0, I_yy, 0; 0, 0, I_zz];
 
 Mxy_max = (T_max/4) * (0.15 * sqrt(2) / 2) * 4;
@@ -232,7 +232,7 @@ Mx_com_arr = sol.value(Mx_com);
 My_com_arr = sol.value(My_com);
 Mz_com_arr = sol.value(Mz_com);
 
-save prevsolve_generic_ptf N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
+% save prevsolve_generic_ptf N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
 
 %% 3D Recreation
 %% 3D Recreation
