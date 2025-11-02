@@ -18,7 +18,7 @@ y = b * (cos(t) - 2 * cos(2 * t));
 z = c * ( - sin(3 * t));
 
 % Plot
-figure(1);
+figure(2);
 
 t_s = sym("t_s","real");
 xs = a * (sin(t_s) + 2 * sin(2 * t_s));
@@ -157,7 +157,7 @@ s.FaceColor = [0.5, 0.5, 0.5];
 %     p_prev = p;
 % end
 
-figure(20)
+figure(1)
 plot(s_arr, kap1_arr, 'LineWidth', 4);
 hold all
 plot(s_arr, kap2_arr, 'LineWidth', 4);
