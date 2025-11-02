@@ -44,7 +44,7 @@ for i = 1:num_of_samples-1
 end
 
 % Creation of the frame
-alpha = 0*2.6817;
+alpha = 2.6817;
 figure(2), hold on, daspect([1,1,1])
 for i = 1:num_of_samples-1
     ds = s_arr(i+1) - s_arr(i);
@@ -52,19 +52,23 @@ for i = 1:num_of_samples-1
     if norm(B) == 0
         V_next = V1_arr(:,end);
         w_dagger_i = [0,0,0]';
+        alpha_increment = (alpha / s_arr(end)) * ds;
+        spin_rodrigues_vector = T_arr(:,i) * tan(0.5 * alpha_increment);
+        rodrigues_vector = spin_rodrigues_vector;
+        R_spin = rod2dcm(rodrigues_vector');
+        V_next = R_spin' * V_next;
+        w_dagger_i = w_dagger_i + alpha_increment * T_arr(:,i+1) / ds;
     else
         B = B / norm(B);
         theta = acos(dot(T_arr(:,i), T_arr(:,i+1)));
         rodrigues_vector = B * tan(0.5 * theta); 
+        alpha_increment = (alpha / s_arr(end)) * ds;
+        spin_rodrigues_vector = T_arr(:,i) * tan(0.5 * alpha_increment);
+        rodrigues_vector = rodrigues_vector + spin_rodrigues_vector;
         R = rod2dcm(rodrigues_vector');
         V_next = R' * V1_arr(:,end);
-        w_dagger_i = theta * B / ds;
+        w_dagger_i = theta * B / ds + alpha_increment * T_arr(:,i+1) / ds;
     end
-    % alpha_increment = (alpha / s_arr(end)) * ds;
-    % spin_rodrigues_vector = T_arr(:,i) * tan(0.5 * alpha_increment); 
-    % R_spin = rod2dcm(spin_rodrigues_vector');
-    % V_next = R_spin' * V_next;
-    % w_dagger_i = w_dagger_i + alpha_increment * T_arr(:,i+1) / ds;
 
     w_dagger_b = [T_arr(:,i+1), V_next, cross(T_arr(:,i+1), V_next)]' * w_dagger_i;
 
