@@ -4,25 +4,25 @@ setDefaultFigureProperties()
 
 %% Curve Generation
 % Parameter
-num_of_samples = 1000;
+num_of_samples = 500;
 t_arr = linspace(0, 2*pi, num_of_samples);  % parametric variable
 
 % Parameters to control shape
-a = 3;      % major amplitude (horizontal)
-b = 3;    % vertical amplitude
-c = 5;    % depth amplitude (3D deviation)
+a = 5;      % major amplitude (horizontal)
+b = 2;    % vertical amplitude
+c = 0;    % depth amplitude (3D deviation)
 
 % Parametric equations for 3D figure-eight curve
-x = a * (sin(t_arr) + 2 * sin(2 * t_arr));
-y = b * (cos(t_arr) - 2 * cos(2 * t_arr));
-z = c * ( - sin(3 * t_arr));
+x = a * cos(t_arr);
+y = b * sin(t_arr);
+z = 0 * t_arr;
 r = [x; y; z];
 
 % Symbolic equations of the curve
 t_s = sym("t_s","real");
-xs = a * (sin(t_s) + 2 * sin(2 * t_s));
-ys = b * (cos(t_s) - 2 * cos(2 * t_s));
-zs = c * ( - sin(3 * t_s));
+xs = a * cos(t_s);
+ys = b * sin(t_s);
+zs = c * t_s;
 rs = [xs, ys, zs]';
 
 % Symbolic differentiation
@@ -55,7 +55,7 @@ circle_edges = radius * [0*cos(-0.1:0.1:2*pi); cos(-0.1:0.1:2*pi); sin(-0.1:0.1:
 circle_edge_arr = r(:,1) + [T_arr(:,1), v1, V2_arr(:,1)] * circle_edges;
 
 % Creation of the frame
-alpha = 2.6817;
+alpha = 0;
 figure(2), hold on, daspect([1,1,1])
 h(1) = plot3(x, y, z, 'k', 'LineWidth', 2, 'DisplayName','$$\mathcal{O}_{Reference}$$');
 axis equal;
@@ -95,7 +95,7 @@ for i = 1:num_of_samples-1
     V2_arr = [V2_arr, cross(T_arr(:,i+1), V_next)];
     p = double(subs(rs, t_s, t_arr(i+1)));
 
-    if mod(i,5) == 0
+    if mod(i,15) == 0
         pt = [p, p + T_arr(:,i+1)*0.5];
         pn = [p, p + V_next*0.5];
         pb = [p, p + cross(T_arr(:,i+1), V_next)*0.5];
@@ -157,7 +157,7 @@ tt_arr = T_arr;
 nn_arr = V1_arr;
 bb_arr = V2_arr;
 
-save alternative_trefoil_ptf s_arr x_arr y_arr z_arr tau_arr kap1_arr kap2_arr tt_arr ...
+save alternative_ellipse_ptf s_arr x_arr y_arr z_arr tau_arr kap1_arr kap2_arr tt_arr ...
     nn_arr bb_arr yaw_arr pitch_arr roll_arr circle_edge_arr
 
 

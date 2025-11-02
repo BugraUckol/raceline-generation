@@ -42,6 +42,7 @@ e_phi_dot = sym("e_phi_dot","real");
 e_the_dot = sym("e_the_dot","real");
 e_psi_dot = sym("e_psi_dot","real");
 
+tau = sym("tau","real");
 kappa1 = sym("kappa1","real");
 kappa2 = sym("kappa2","real");
 
@@ -63,7 +64,7 @@ Cp2b = CE2B(E);
 % Vectors
 w_be_b = [p; q; r];
 w_be_p = Cb2p * w_be_b;
-w_pe_p = s_dot * [0; kappa1; kappa2];
+w_pe_p = s_dot * [tau; kappa1; kappa2];
 w_pe_b = Cp2b * w_pe_p;
 R_bp_p = [0; en; eb];
 De_R_pe_p = [s_dot; 0; 0];

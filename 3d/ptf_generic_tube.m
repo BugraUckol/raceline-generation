@@ -4,7 +4,7 @@ setDefaultFigureProperties()
 
 %% Curve Generation
 % Parameter
-samples = 1000;
+samples = 2000;
 t = linspace(0, 2*pi, samples);  % parametric variable
 
 % Parameters to control shape
@@ -118,12 +118,17 @@ for i = 1:1:samples
         elseif i == samples
             points = plotCircle3DNew(p', ...
             [tt'],0.65,'r', 4, 1);
-        elseif mod(i,1) == 0
+        elseif mod(i,5) == 0
             points = plotCircle3DNew(p', ...
             [tt'],0.65,'k', 0.2, 1);
         end
         points_arr(:,:,i) = points;
         % plot3(omegab(1,:), omegab(2,:), omegab(3,:), 'LineWidth', 2, 'Color', 'm');
+    end
+    if mod(i,20) == 0
+        plot3(pt(1,:), pt(2,:), pt(3,:), 'LineWidth', 2, 'Color', 'r');
+        plot3(pn(1,:), pn(2,:), pn(3,:), 'LineWidth', 2, 'Color', 'g');
+        plot3(pb(1,:), pb(2,:), pb(3,:), 'LineWidth', 2, 'Color', 'b');
     end
     pause(0.005);
     p_prev = p;
@@ -133,7 +138,7 @@ s_arr = s_arr(2:end);
 s = surf(squeeze(points_arr(1,:,:)), ...
     squeeze(points_arr(2,:,:)), ...
     squeeze(points_arr(3,:,:)));
-s.FaceAlpha = 1;
+s.FaceAlpha = 0.4;
 s.EdgeColor = 'none';
 s.FaceColor = [0.5, 0.5, 0.5];
 
