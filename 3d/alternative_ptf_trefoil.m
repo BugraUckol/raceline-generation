@@ -1,11 +1,14 @@
 %% Prep
-% clc, clear, close all
+clc, clear, close all
 setDefaultFigureProperties()
 
 %% Curve Generation
 % Parameter
 num_of_samples = 1000;
 t_arr = linspace(0, 2*pi, num_of_samples);  % parametric variable
+square_edge = 1;
+radius = 0.65;
+alpha = 2.6817;
 
 % Parameters to control shape
 a = 3;      % major amplitude (horizontal)
@@ -50,13 +53,17 @@ for i = 1:num_of_samples-1
 end
 
 % Creating circle edge around the tangent vector
-radius = 0.65;
 circle_edges = radius * [0*cos(-0.1:0.1:2*pi); cos(-0.1:0.1:2*pi); sin(-0.1:0.1:2*pi)];
 circle_edge_arr = r(:,1) + [T_arr(:,1), v1, V2_arr(:,1)] * circle_edges;
 
+% Creating square edge around the tangent vector
+square_edges = square_edge * [0, 0, 0, 0, 0;
+    0.5, -0.5, -0.5, 0.5, 0.5;
+    0.5, 0.5, -0.5, -0.5, 0.5];
+square_edge_arr = r(:,1) + [T_arr(:,1), v1, V2_arr(:,1)] * square_edges;
+
 % Creation of the frame
-alpha = 2.6817;
-figure(2), hold on, daspect([1,1,1])
+figure(20), hold on, daspect([1,1,1])
 h(1) = plot3(x, y, z, 'k', 'LineWidth', 2, 'DisplayName','$$\mathcal{O}_{Reference}$$');
 axis equal;
 xlabel('East'); ylabel('North'); zlabel('Up');
@@ -102,11 +109,14 @@ for i = 1:num_of_samples-1
         plot3(pt(1,:), pt(2,:), pt(3,:), 'LineWidth', 2, 'Color', 'r');
         plot3(pn(1,:), pn(2,:), pn(3,:), 'LineWidth', 2, 'Color', 'g', 'DisplayName', num2str(i));
         plot3(pb(1,:), pb(2,:), pb(3,:), 'LineWidth', 2, 'Color', 'b');
-
-        circle_edges_i = p + [T_arr(:,i+1), V_next, cross(T_arr(:,i+1), V_next)] * circle_edges;
-        circle_edge_arr = cat(3,circle_edge_arr,circle_edges_i);
-        plot3(circle_edges_i(1,:),circle_edges_i(2,:),circle_edges_i(3,:),'k','LineWidth',0.2);
+        plot3(circle_edges_i(1,:),circle_edges_i(2,:),circle_edges_i(3,:),'k','LineWidth',0.1);
     end
+
+    circle_edges_i = p + [T_arr(:,i+1), V_next, cross(T_arr(:,i+1), V_next)] * circle_edges;
+    circle_edge_arr = cat(3,circle_edge_arr,circle_edges_i);
+
+    square_edges_i = p + [T_arr(:,i+1), V_next, cross(T_arr(:,i+1), V_next)] * square_edges;
+    square_edge_arr = cat(3,square_edge_arr,square_edges_i);
 
     if i == 1
         pt = [p, p + T_arr(:,i+1)*0.5];
@@ -139,7 +149,7 @@ s.FaceColor = [0.5, 0.5, 0.5];
 legend(h,'interpreter','latex')
 
 kappa = [w_arr(:,end), w_arr];
-figure(1), hold on
+figure(10), hold on
 plot(s_arr, kappa)
 xlabel('Curvilinear Distance [m]')
 ylabel('Value [1/m]')
@@ -158,7 +168,7 @@ nn_arr = V1_arr;
 bb_arr = V2_arr;
 
 save alternative_trefoil_ptf s_arr x_arr y_arr z_arr tau_arr kap1_arr kap2_arr tt_arr ...
-    nn_arr bb_arr yaw_arr pitch_arr roll_arr circle_edge_arr
+    nn_arr bb_arr yaw_arr pitch_arr roll_arr circle_edge_arr square_edge_arr square_edge radius
 
 
 

@@ -13,10 +13,17 @@ import casadi.*
 % path = load('three_d_infinity.mat');
 % path = load('generic_ptf.mat');
 % path = load('alternative_ellipse_ptf.mat');
-path = load('alternative_trefoil_ptf.mat');
+% path = load('alternative_trefoil_ptf.mat');
+path = load('alternative_generic_ptf.mat');
 % filename = 'trefoil_ptf.gif';
 % path = load('trefoil_ptf.mat');
 % path = load('half_circle_2d.mat');
+square_cross_section_flag = 1;
+if(square_cross_section_flag == 1)
+    edges_e_list = path.square_edge_arr;
+else
+    edges_e_list = path.circle_edge_arr;
+end
 
 %% System Model
 %{
@@ -139,18 +146,21 @@ opti.subject_to(Mz_com >= -Mz_max);
 opti.subject_to(u.^2 + v.^2 + w.^2 <= V_max^2);
 
 % Corridor Constraints
-% opti.subject_to(en <= 0.5);
-% opti.subject_to(eb <= 0.5);
-% opti.subject_to(en >= -0.5);
-% opti.subject_to(eb >= -0.5);
-opti.subject_to(en.^2 + eb.^2 <= 0.65^2);
+if(square_cross_section_flag == 1)
+    opti.subject_to(en <= path.square_edge/2);
+    opti.subject_to(eb <= path.square_edge/2);
+    opti.subject_to(en >= -path.square_edge/2);
+    opti.subject_to(eb >= -path.square_edge/2);
+else
+    opti.subject_to(en.^2 + eb.^2 <= 0.65^2);
+end
 
 % Angle Constraints
 opti.subject_to(ephi <= pi);
-opti.subject_to(ethe <= pi);
+opti.subject_to(ethe <= pi/2-pi/10);
 opti.subject_to(epsi <= pi);
 opti.subject_to(ephi >= -pi);
-opti.subject_to(ethe >= -pi);
+opti.subject_to(ethe >= -pi/2+pi/10);
 opti.subject_to(epsi >= -pi);
 
 % Initial Conditions
@@ -235,9 +245,8 @@ Mx_com_arr = sol.value(Mx_com);
 My_com_arr = sol.value(My_com);
 Mz_com_arr = sol.value(Mz_com);
 
-% save prevsolve_generic_ptf N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
+% save prevsolve_trefoil_ptf_1000 N time_arr en_arr eb_arr ephi_arr ethe_arr epsi_arr u_arr v_arr w_arr p_arr q_arr r_arr T_com_arr Mx_com_arr My_com_arr Mz_com_arr
 
-%% 3D Recreation
 %% 3D Recreation
 x_arr = zeros(1,length(distance_arr));
 y_arr = zeros(1,length(distance_arr));
@@ -245,10 +254,6 @@ z_arr = zeros(1,length(distance_arr));
 
 k = 0;
 
-edges = [0, 0, 0, 0, 0;
-    0.5, -0.5, -0.5, 0.5, 0.5;
-    0.5, 0.5, -0.5, -0.5, 0.5];
-edges_e_list = [];
 pp0 = [path.x_arr(1); path.y_arr(1); path.z_arr(1)];
 dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 
@@ -287,9 +292,6 @@ for point = distance_arr
     % plot3(ptx(1,:), ptx(2,:), ptx(3,:), 'LineWidth', 3, 'Color', 'r');
     % plot3(pty(1,:), pty(2,:), pty(3,:), 'LineWidth', 3, 'Color', 'g');
     % plot3(ptz(1,:), ptz(2,:), ptz(3,:), 'LineWidth', 3, 'Color', 'b');
-
-    edges_e = pt + c_p2e * edges;
-    edges_e_list = cat(3, edges_e_list, edges_e);
 end
 
 %% State Plots
@@ -298,7 +300,7 @@ set(0,'DefaultFigureWindowStyle','docked')
 figure(1)
 subplot(3,2,1)
 plot(distance_arr, time_arr);
-title('Curvilinear Distance vs Time')
+title('s vs Time')
 xlabel('Curvilinear Distance [m]')
 ylabel('Time [s]')
 hold on
@@ -306,17 +308,17 @@ hold on
 subplot(3,2,2)
 plot(distance_arr, en_arr), hold on
 plot(distance_arr, eb_arr)
-title('Curvilinear Distance vs Cartesian Deviations')
+title('s vs Cartesian Deviations')
 legend('e_n', 'e_b')
 xlabel('Curvilinear Distance [m]')
-ylabel('Cartesian Deviation [m]')
+ylabel('Deviation [m]')
 
 subplot(3,2,3)
 plot(distance_arr, ephi_arr), hold on
 plot(distance_arr, ethe_arr)
 plot(distance_arr, epsi_arr)
-title(['Curvilinear Distance vs Euler Angles of $$\mathcal{F_B}$$ wrt. $$\mathcal{F_P}$$'])
-legend('\phi_{e}', '\theta_{e}', '\psi_{e}')
+title(['s vs Euler Angles of $$\mathcal{F_B}$$ wrt. $$\mathcal{F_P}$$'])
+legend('e_\phi', 'e_\theta', 'e_\psi')
 xlabel('Curvilinear Distance [m]')
 ylabel('Angle [rad]')
 
@@ -325,7 +327,7 @@ plot(distance_arr, u_arr), hold on
 plot(distance_arr, v_arr)
 plot(distance_arr, w_arr)
 legend('u','v','w')
-title('Curvilinear Distance vs UVW')
+title('s vs $$\bar V^{(B)}$$')
 xlabel('Curvilinear Distance [m]')
 ylabel('Velocity [m/s]')
 
@@ -334,29 +336,29 @@ plot(distance_arr, p_arr), hold on
 plot(distance_arr, q_arr)
 plot(distance_arr, r_arr)
 legend('p','q','r')
-title('Curvilinear Distance vs PQR')
+title('s vs PQR')
 xlabel('Curvilinear Distance [m]')
 ylabel('Anglar Velocity [rad/s]')
 
 
 subplot(3,2,6)
 plot(distance_arr, sqrt(u_arr.^2 + v_arr.^2 + w_arr.^2)), hold on
-title('Curvilinear Distance vs Total Velocity')
+title('s vs Total Velocity')
 xlabel('Curvilinear Distance [m]')
-ylabel('Total Velocity [m/s]')
+ylabel('Velocity [m/s]')
 
 %% Input Plots
 figure(2)
 subplot(2,1,1)
 plot(distance_arr(1:end-1), T_com_arr); hold on;
-title('Curvilinear Distance vs Thrust')
+title('s vs Thrust')
 xlabel('Curvilinear Distance [m]')
 ylabel('Thrust [N]')
 subplot(2,1,2)
 plot(distance_arr(1:end-1), Mx_com_arr); hold on;
 plot(distance_arr(1:end-1), My_com_arr);
 plot(distance_arr(1:end-1), Mz_com_arr);
-title('Curvilinear Distance vs Moments')
+title('s vs Moments')
 xlabel('Curvilinear Distance [m]')
 ylabel('Moment [Nm]')
 legend('M_x','M_y','M_z')
@@ -365,43 +367,60 @@ legend('M_x','M_y','M_z')
 figure(3)
 p_hist = [p];
 k = 1;
-cla;
+% cla;
 setDefaultFigureProperties();
-dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
-dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
-dcm_b_e = dcm_p_e * dcm_b_p;
 
-plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2), hold on
-plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
-pp = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
-p = dcm_p_e * [0; en_arr(k); eb_arr(k)] + pp;
+plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2,...
+    'Color', 'k', 'LineStyle', '--'), hold on
 
-bx = [p, p + dcm_b_e(:,1)];
-by = [p, p + dcm_b_e(:,2)];
-bz = [p, p + dcm_b_e(:,3)];
+x = x_arr;
+y = y_arr;
+z = z_arr;
+v = sqrt(u_arr.^2 + v_arr.^2 + w_arr.^2);
+patch([x nan],[y nan],[z nan],[v nan], 'edgecolor', 'interp','LineWidth',5);
+hcb = colorbar;colormap(jet);grid minor;
+colorTitleHandle = get(hcb,'Title');
+titleString = 'Total Velocity';
+set(colorTitleHandle ,{'String','Rotation','Position'},{ titleString,90,[80 250]});
 
-plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
-plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
-plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
-
-
-% Ground truth of velocity frame
-v_vec = [u_arr(k); v_arr(k); w_arr(k)];
-vx = [p, p + dcm_b_e * v_vec / norm(v_vec)];
-% Plot Velocity Frame
-% plot3(vx(1,:), vx(2,:), vx(3,:), 'LineWidth', 3, 'Color', 'm');
-
-% Plot Thrust Vector
-% t_vec = [p, p + dcm_b_e(:,3) * T_com_arr(k)];
-% plot3(t_vec(1,:), t_vec(2,:), t_vec(3,:), 'LineWidth', 3, 'Color', 'cyan');
+plot3(edges_e_list(1,:,1),edges_e_list(2,:,1),edges_e_list(3,:,1),...
+    'c','LineWidth',4,'DisplayName','Start');
+plot3(edges_e_list(1,:,end-2),edges_e_list(2,:,end-2),edges_e_list(3,:,end-2),...
+    'm','LineWidth',4,'DisplayName','Finish')
 
 eilist_size = size(edges_e_list);
-for ei = 2:5:eilist_size(3)-1
+for ei = 2:10:eilist_size(3)-1
+    dcm_p_e = CB2E([path.roll_arr(ei), path.pitch_arr(ei), path.yaw_arr(ei)]);
+    dcm_b_p = CB2E([ephi_arr(ei), ethe_arr(ei), epsi_arr(ei)]);
+    dcm_b_e = dcm_p_e * dcm_b_p;
+
+    pp = [path.x_arr(ei); path.y_arr(ei); path.z_arr(ei)];
+    p = dcm_p_e * [0; en_arr(ei); eb_arr(ei)] + pp;
+    
+    bx = [p, p + dcm_b_e(:,1)];
+    by = [p, p + dcm_b_e(:,2)];
+    bz = [p, p + dcm_b_e(:,3)];
+    
+    % plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
+    % plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
+    % plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
     edges_ei = edges_e_list(:,:,ei);
-    % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
-    plotCircle3D([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
-        [path.tt_arr(:,ei)'],0.75,'k', 1)
+    plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
 end
+
+if square_cross_section_flag == 1
+    plot3(squeeze(edges_e_list(1,1,:)), squeeze(edges_e_list(2,1,:)), squeeze(edges_e_list(3,1,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,2,:)), squeeze(edges_e_list(2,2,:)), squeeze(edges_e_list(3,2,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
+    plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
+end
+s = surf(squeeze(edges_e_list(1,:,:)), ...
+    squeeze(edges_e_list(2,:,:)), ...
+    squeeze(edges_e_list(3,:,:)));
+s.FaceAlpha = 0.4;
+s.EdgeColor = 'none';
+s.FaceColor = [0.5, 0.5, 0.5];
+
 % edges_ei = edges_e_list(:,:,1);
 % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
 % edges_ei = edges_e_list(:,:,end-1);
@@ -412,10 +431,18 @@ end
 % plot3(squeeze(edges_e_list(1,3,:)), squeeze(edges_e_list(2,3,:)), squeeze(edges_e_list(3,3,:)), 'k', 'LineWidth', 1.0)
 % plot3(squeeze(edges_e_list(1,4,:)), squeeze(edges_e_list(2,4,:)), squeeze(edges_e_list(3,4,:)), 'k', 'LineWidth', 1.0)
 daspect([1,1,1])
-legend({'Centerline', 'Optimal Trajectory', ...
-    '$$\hat{x_{\mathcal{B}}}$$', '$$\hat{y_{\mathcal{B}}}$$', ...
-    '$$\hat{z_{\mathcal{B}}}$$'}, 'interpreter', 'latex', 'Location','northeast')
+view(75, 15);
+legend({'Centerline', 'Optimal Trajectory', 'Start', 'Finish'}, 'interpreter', 'latex', 'Location','northeast')
 xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube and The Optimal Solution')
+set(gcf, 'color', 'none');
+set(gca, 'color', 'none');
+% exportgraphics(gcf,'empty_tube.eps',...   % since R2020a
+% 'ContentType','vector',...
+% 'BackgroundColor','none')
+axis off;                    % remove axes, ticks, labels
+set(gca, 'Visible', 'off');  % hide all decorations
+title off
+title('')
 
 %% Results in 3D
 figure(4)
@@ -426,8 +453,9 @@ dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
 dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
 dcm_b_e = dcm_p_e * dcm_b_p;
 
-plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2), hold on
-plot3(x_arr, y_arr, z_arr, 'LineWidth', 2)
+plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2,...
+    'Color', 'k', 'LineStyle', '--'), hold on
+plot3(x_arr, y_arr, z_arr, 'LineWidth', 2), hold on
 pp = [path.x_arr(k); path.y_arr(k); path.z_arr(k)];
 p = dcm_p_e * [0; en_arr(k); eb_arr(k)] + pp;
 
@@ -440,9 +468,9 @@ plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
 plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
 
 edges_ei = edges_e_list(:,:,1);
-plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'g', 'LineWidth', 4), hold on
+plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'c', 'LineWidth', 4), hold on
 edges_ei = edges_e_list(:,:,end-1);
-plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'r', 'LineWidth', 4), hold on
+plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'm', 'LineWidth', 4), hold on
 
 set(gcf, 'color', 'white');
 set(gca, 'color', 'white');
@@ -455,8 +483,9 @@ title off
 title('')
 legend off
 daspect([1,1,1])
+view(75, 15);
 
-for k=1:10:N-1
+for k=1:20:N-1
     dcm_p_e = CB2E([path.roll_arr(k), path.pitch_arr(k), path.yaw_arr(k)]);
     dcm_b_p = CB2E([ephi_arr(k), ethe_arr(k), epsi_arr(k)]);
     dcm_b_e = dcm_p_e * dcm_b_p;
@@ -489,12 +518,14 @@ end
 daspect([1,1,1])
 legend({'Centerline', 'Optimal Trajectory', ...
     '$$\hat{x_{\mathcal{B}}}$$', '$$\hat{y_{\mathcal{B}}}$$', ...
-    '$$\hat{z_{\mathcal{B}}}$$'}, 'interpreter', 'latex', 'Location','northeast')
+    '$$\hat{z_{\mathcal{B}}}$$', 'Start', 'Finish'}, 'interpreter', 'latex', 'Location','northeast')
 xlabel('East'), ylabel('North'), zlabel('Up'), title('Centerline and The Optimal Solution')
 
 %% Open Loop Test Plot
 figure(5)
-plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2, 'LineStyle', '--'); hold on
+% plot3(path.x_arr, path.y_arr, path.z_arr, 'LineWidth', 2, ...
+%     'Color', 'k', 'LineStyle', '--'); 
+hold on
 plot3(x_arr, y_arr, z_arr, 'LineWidth', 2);
 daspect([1,1,1])
 dcm_p_e_res = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
@@ -522,7 +553,12 @@ for k=1:1:N-1
     w_res = w_res + dt * I_b^-1 * (M_res - cross(w_res, I_b * w_res));
     P_res_all = [P_res_all, P_res];
 end
-plot3(P_res_all(1,:), P_res_all(2,:), P_res_all(3,:),'LineWidth',2,'Color', 'red')
+plot3(P_res_all(1,:), P_res_all(2,:), P_res_all(3,:),'LineWidth',2,'Color', 'k')
+
+edges_ei = edges_e_list(:,:,1);
+plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'c', 'LineWidth', 4), hold on
+edges_ei = edges_e_list(:,:,end-1);
+plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'm', 'LineWidth', 4), hold on
 
 dcm_p_e = CB2E([path.roll_arr(1), path.pitch_arr(1), path.yaw_arr(1)]);
 dcm_b_p = CB2E([ephi_arr(1), ethe_arr(1), epsi_arr(1)]);
@@ -538,8 +574,10 @@ plot3(bx(1,:), bx(2,:), bx(3,:), 'LineWidth', 2, 'Color', 'r');
 plot3(by(1,:), by(2,:), by(3,:), 'LineWidth', 2, 'Color', 'g');
 plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
 
-legend({'Centerline', 'Optimal Trajectory', 'Open Loop Results'}, 'Location','northeast')
+legend({'Optimal Trajectory', 'Open Loop Results'}, 'Location','northeast')
 xlabel('East'), ylabel('North'), zlabel('Up'), title('Tube, Optimal Solution and Open Loop Results')
+norm([x_arr(end);y_arr(end);z_arr(end)] - [P_res_all(1,end); P_res_all(2,end); P_res_all(3,end)])
+
 %% 3D Empty
 figure(6)
 p_hist = [p];
@@ -547,21 +585,21 @@ k = 1;
 cla;
 hold on
 
-points_arr = [];
+points_arr = edges_e_list;
 eilist_size = size(edges_e_list);
 counter = 0;
-for ei = 2:1:eilist_size(3)-1
-    counter = counter + 1;
-    edges_ei = edges_e_list(:,:,ei);
-    % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
-    points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
-        [path.tt_arr(:,ei)'],0.65,'k', 0.005, 0);
-    % if mod(counter,5) == 0
-        % points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
-            % [path.tt_arr(:,ei)'],0.65,'k', 0.005, 1);
-    % end
-    points_arr(:,:,counter) = points;
-end
+% for ei = 2:1:eilist_size(3)-1
+%     counter = counter + 1;
+%     edges_ei = edges_e_list(:,:,ei);
+%     % plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'k', 'LineWidth', 0.15), hold on
+%     points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+%         [path.tt_arr(:,ei)'],0.65,'k', 0.005, 0);
+%     % if mod(counter,5) == 0
+%         % points = plotCircle3DNew([path.x_arr(ei), path.y_arr(ei), path.z_arr(ei)], ...
+%             % [path.tt_arr(:,ei)'],0.65,'k', 0.005, 1);
+%     % end
+%     points_arr(:,:,counter) = points;
+% end
 
 sl = surfl(squeeze(points_arr(1,:,:)), squeeze(points_arr(2,:,:)), ...
     squeeze(points_arr(3,:,:))); hold on
