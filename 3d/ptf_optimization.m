@@ -1,5 +1,5 @@
 %% Prep
-clc, clear
+% clc, clear
 % Clear is especially important since the opti object should not be
 %   given constraints from the past
 
@@ -12,9 +12,9 @@ import casadi.*
 %% Import path properties
 % path = load('three_d_infinity.mat');
 % path = load('generic_ptf.mat');
-% path = load('alternative_ellipse_ptf.mat');
-% path = load('alternative_trefoil_ptf.mat');
 path = load('alternative_generic_ptf.mat');
+% path = load('alternative_trefoil_ptf.mat');
+% path = load('alternative_generic_ptf.mat');
 % filename = 'trefoil_ptf.gif';
 % path = load('trefoil_ptf.mat');
 % path = load('half_circle_2d.mat');
@@ -39,7 +39,7 @@ U = [Fz, Mx, My, Mz]
 %}
 
 %% Constants
-T_max = 15;
+T_max = 5;
 T_min = 0;
 g = 9.81;
 Cd = 0.3;
@@ -59,6 +59,14 @@ FM2w = [0.2000    0.9425   -0.9425    4.7125;
     0.2000    0.9425    0.9425   -4.7125;
     0.2000   -0.9425    0.9425    4.7125;
     0.2000   -0.9425   -0.9425   -4.7125];
+
+w2FM_num = FM2w^(-1);
+
+T_max = (w2FM_num * [1,1,1,1]')' * [1,0,0,0]';
+Mx_max = (w2FM_num * [1,1,0,0]')' * [0,1,0,0]';
+My_max = (w2FM_num * [0,1,1,0]')' * [0,0,1,0]';
+Mz_max = (w2FM_num * [1,0,1,0]')' * [0,0,0,1]';
+
 
 %% Setting Optimization Problem
 size_vec = floor(size(path.s_arr));
@@ -124,23 +132,24 @@ for k=1:N % loop over control intervals
     % Algebraic relation between optimization parameters and propagation
     opti.subject_to(X(:,k+1)==x_next);
 
-    opti.subject_to(FM2w * U(:,k) < [1,1,1,1]');
-    opti.subject_to(FM2w * U(:,k) > [0,0,0,0]');
+    opti.subject_to(FM2w * U(:,k) <= [1,1,1,1]');
+    opti.subject_to(FM2w * U(:,k) >= [0,0,0,0]');
 
 end
 
 % Fundamental Constraint
 opti.subject_to(t(2:N+1) > t(1:N))
+opti.subject_to(t >= 0);
 
-% Input Constraints
-opti.subject_to(T_com <= T_max);
-opti.subject_to(Mx_com <= Mxy_max);
-opti.subject_to(My_com <= Mxy_max);
-opti.subject_to(Mz_com <= Mz_max);
-opti.subject_to(T_com >= T_min);
-opti.subject_to(Mx_com >= -Mxy_max);
-opti.subject_to(My_com >= -Mxy_max);
-opti.subject_to(Mz_com >= -Mz_max);
+% % Input Constraints
+% opti.subject_to(T_com <= T_max);
+% opti.subject_to(Mx_com <= Mxy_max);
+% opti.subject_to(My_com <= Mxy_max);
+% opti.subject_to(Mz_com <= Mz_max);
+% opti.subject_to(T_com >= T_min);
+% opti.subject_to(Mx_com >= -Mxy_max);
+% opti.subject_to(My_com >= -Mxy_max);
+% opti.subject_to(Mz_com >= -Mz_max);
 
 % Velocity Constraints
 opti.subject_to(u.^2 + v.^2 + w.^2 <= V_max^2);
@@ -152,7 +161,7 @@ if(square_cross_section_flag == 1)
     opti.subject_to(en >= -path.square_edge/2);
     opti.subject_to(eb >= -path.square_edge/2);
 else
-    opti.subject_to(en.^2 + eb.^2 <= 0.65^2);
+    opti.subject_to(en.^2 + eb.^2 <= 0.50^2);
 end
 
 % Angle Constraints
@@ -309,7 +318,7 @@ subplot(3,2,2)
 plot(distance_arr, en_arr), hold on
 plot(distance_arr, eb_arr)
 title('s vs Cartesian Deviations')
-legend('e_n', 'e_b')
+legend('$$e_{n1}$$', '$$e_{n2}$$', 'interpreter', 'latex')
 xlabel('Curvilinear Distance [m]')
 ylabel('Deviation [m]')
 
@@ -384,12 +393,12 @@ titleString = 'Total Velocity';
 set(colorTitleHandle ,{'String','Rotation','Position'},{ titleString,90,[80 250]});
 
 plot3(edges_e_list(1,:,1),edges_e_list(2,:,1),edges_e_list(3,:,1),...
-    'g','LineWidth',4,'DisplayName','Start');
-plot3(edges_e_list(1,:,end-4),edges_e_list(2,:,end-4),edges_e_list(3,:,end-4),...
-    'r','LineWidth',4,'DisplayName','Finish')
+    'c','LineWidth',4,'DisplayName','Start');
+plot3(edges_e_list(1,:,end-2),edges_e_list(2,:,end-2),edges_e_list(3,:,end-2),...
+    'm','LineWidth',4,'DisplayName','Finish')
 
 eilist_size = size(edges_e_list);
-for ei = 2:10:eilist_size(3)-1
+for ei = 2:20:eilist_size(3)-1
     dcm_p_e = CB2E([path.roll_arr(ei), path.pitch_arr(ei), path.yaw_arr(ei)]);
     dcm_b_p = CB2E([ephi_arr(ei), ethe_arr(ei), epsi_arr(ei)]);
     dcm_b_e = dcm_p_e * dcm_b_p;
@@ -469,7 +478,7 @@ plot3(bz(1,:), bz(2,:), bz(3,:), 'LineWidth', 2, 'Color', 'b');
 
 edges_ei = edges_e_list(:,:,1);
 plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'c', 'LineWidth', 4), hold on
-edges_ei = edges_e_list(:,:,end-1);
+edges_ei = edges_e_list(:,:,end-2);
 plot3(edges_ei(1,:), edges_ei(2,:), edges_ei(3,:), 'm', 'LineWidth', 4), hold on
 
 set(gcf, 'color', 'white');
@@ -687,9 +696,9 @@ titleString = 'Time';
 set(colorTitleHandle ,{'String','Rotation','Position'},{ titleString,90,[80 250]});
 
 plot3(edges_e_list(1,:,1),edges_e_list(2,:,1),edges_e_list(3,:,1),...
-    'g','LineWidth',4,'DisplayName','Start');
-plot3(edges_e_list(1,:,end-4),edges_e_list(2,:,end-4),edges_e_list(3,:,end-2),...
-    'r','LineWidth',4,'DisplayName','Finish')
+    'c','LineWidth',4,'DisplayName','Start');
+plot3(edges_e_list(1,:,end-2),edges_e_list(2,:,end-2),edges_e_list(3,:,end-2),...
+    'm','LineWidth',4,'DisplayName','Finish')
 
 eilist_size = size(edges_e_list);
 for ei = 2:10:eilist_size(3)-1

@@ -140,14 +140,14 @@ end
 opti.subject_to(t(2:N+1) > t(1:N))
 
 % Input Constraints
-opti.subject_to(T_com <= T_max);
-opti.subject_to(Mx_com <= Mxy_max);
-opti.subject_to(My_com <= Mxy_max);
-opti.subject_to(Mz_com <= Mz_max);
-opti.subject_to(T_com >= T_min);
-opti.subject_to(Mx_com >= -Mxy_max);
-opti.subject_to(My_com >= -Mxy_max);
-opti.subject_to(Mz_com >= -Mz_max);
+% opti.subject_to(T_com <= T_max);
+% opti.subject_to(Mx_com <= Mxy_max);
+% opti.subject_to(My_com <= Mxy_max);
+% opti.subject_to(Mz_com <= Mz_max);
+% opti.subject_to(T_com >= T_min);
+% opti.subject_to(Mx_com >= -Mxy_max);
+% opti.subject_to(My_com >= -Mxy_max);
+% opti.subject_to(Mz_com >= -Mz_max);
 
 % Velocity Constraints
 opti.subject_to(u.^2 + v.^2 + w.^2 <= V_max^2);

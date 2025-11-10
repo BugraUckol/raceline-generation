@@ -1,9 +1,12 @@
-t = 0:0.1:10;
-x = sin(t);
-s = sin(t).^2 + 2 * t;
+% t = 0:0.1:10;
+% x = sin(t);
+% s = sin(t).^2 + 2 * t;
 
 close all
-figure
+figure(8)
+t = time_arr;
+s = path.s_arr;
+x = t;
 
 % Bottom axis: x vs s
 ax1 = axes;
@@ -28,9 +31,9 @@ ax2.YColor = 'none';
 % set(ax2, 'XTick', xticks, 'XTickLabel', xticklabels)
 
 % Tick mapping
-xtticks = interp1(t,s,t(1:5:end));
+xtticks = interp1(t,s,t(1:100:end));
 xticklabels = arrayfun(@(x) sprintf('%.1f', x), xtticks, 'UniformOutput', false);
-set(ax2, 'XTick', xtticks, 'XTickLabel', t(1:5:end))
+set(ax2, 'XTick', xtticks, 'XTickLabel', t(1:100:end))
 
 xlabel(ax2, 't(s) [s]')
 
